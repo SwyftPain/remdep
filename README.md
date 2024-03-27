@@ -19,6 +19,7 @@ This repo contains two files:
 ## Windows
 
 Create a folder and put ``remdep.bat`` into it.
+
 Open environment variables and add a folder to your ``PATH``.
 
 Restart command prompt or powershell and in any project containing ``package.json``, you can run:
