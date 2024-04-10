@@ -68,14 +68,14 @@ set "dependenciesToRemove=!filteredDependencies:~1!"
 REM Remove dependencies containing the keyword based on the detected package manager
 if "%manager%"=="npm" (
     npm uninstall --save !dependenciesToRemove!
-    echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
+    echo Dependencies containing the keyword '%keyword%' have been removed using '%manager%''.
 ) else if "%manager%"=="pnpm" (
     pnpm remove !dependenciesToRemove!
-    echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
+    echo Dependencies containing the keyword '%keyword%' have been removed using '%manager%''.
 ) else if "%manager%"=="yarn" (
     yarn remove !dependenciesToRemove!
-    echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
+    echo Dependencies containing the keyword '%keyword%' have been removed using '%manager%''.
 ) else if "%manager%"=="bun" (
     bun remove !dependenciesToRemove!
-    echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
+    echo Dependencies containing the keyword '%keyword%' have been removed using '%manager%''.
 )

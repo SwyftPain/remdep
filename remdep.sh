@@ -68,4 +68,4 @@ elif [ "$manager" == "bun" ]; then
     bun remove $dependenciesToRemove
 fi
 
-echo "Dependencies containing the keyword '$keyword' have been removed using $manager."
+echo "Dependencies containing the keyword '$keyword' have been removed using '$manager'."
