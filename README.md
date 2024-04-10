@@ -43,7 +43,7 @@ And it will remove all the packages containing that keyword.
 
 # Note
 
-It automatically detects package manager you used, be it ``npm``, ``yarn`` or ``pnpm`` and it uses that package manager to uninstall the commands.
+It automatically detects package manager you used, be it ``npm``, ``yarn``, ``pnpm`` or ``bun`` and it uses that package manager to uninstall the commands.
 
 # Warning
 
