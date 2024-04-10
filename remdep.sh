@@ -19,8 +19,11 @@ elif [ -f "pnpm-lock.yaml" ]; then
 elif [ -f "yarn.lock" ]; then
     lockfile="yarn.lock"
     manager="yarn"
+elif [ -f "bun.lockb" ]; then
+    lockfile="bun.lockb"
+    manager="bun"
 else
-    echo "Error: Lockfile (package-lock.json, pnpm-lock.yaml, or yarn.lock) not found in the current directory."
+    echo "Error: Lockfile (package-lock.json, pnpm-lock.yaml, yarn.lock or bun.lockb) not found in the current directory."
     exit 1
 fi
 
@@ -61,6 +64,8 @@ elif [ "$manager" == "pnpm" ]; then
     pnpm remove $dependenciesToRemove
 elif [ "$manager" == "yarn" ]; then
     yarn remove $dependenciesToRemove
+elif [ "$manager" == "bun" ]; then
+    bun remove $dependenciesToRemove
 fi
 
 echo "Dependencies containing the keyword '$keyword' have been removed using $manager."
