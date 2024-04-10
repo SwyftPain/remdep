@@ -20,8 +20,11 @@ if exist "package-lock.json" (
 ) else if exist "yarn.lock" (
     set "lockfile=yarn.lock"
     set "manager=yarn"
+) else if exist "bun.lockb" (
+    set "lockfile=bun.lockb"
+    set "manager=bun"
 ) else (
-    echo Error: Lockfile ^(package-lock.json, pnpm-lock.yaml, or yarn.lock^) not found in the current directory.
+    echo Error: Lockfile ^(package-lock.json, pnpm-lock.yaml, yarn.lock or bun.lockb^) not found in the current directory.
     exit /b 1
 )
 
@@ -71,5 +74,8 @@ if "%manager%"=="npm" (
     echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
 ) else if "%manager%"=="yarn" (
     yarn remove !dependenciesToRemove!
+    echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
+) else if "%manager%"=="bun" (
+    bun remove !dependenciesToRemove!
     echo Dependencies containing the keyword '%keyword%' have been removed using %manager%.
 )
