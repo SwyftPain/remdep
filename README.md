@@ -41,6 +41,14 @@ Restart your terminal or source your .bashrc and in any project containing ``pac
 
 And it will remove all the packages containing that keyword.
 
+# Source Bash
+
+``source ~/.bashrc``
+
+# Dependencies
+
+This package is dependent on JQ on all platforms for parsing JSON.
+
 # Note
 
 It automatically detects package manager you used, be it ``npm``, ``yarn``, ``pnpm`` or ``bun`` and it uses that package manager to uninstall the commands.
