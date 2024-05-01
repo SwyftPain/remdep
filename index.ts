@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { createInterface } from 'readline';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -58,6 +58,13 @@ async function removeDependenciesContainingKeyword(keyword: string) {
             const { stdout, stderr } = await execAsync(command);
             console.log(stdout);
             console.error(stderr);
+
+            // Additional check for removing the .eslintrc.cjs file if keyword is 'eslint'
+            if (keyword === 'eslint' && existsSync('.eslintrc.cjs')) {
+                unlinkSync('.eslintrc.cjs');
+                console.log('.eslintrc.cjs file has been removed.');
+            }
+
             console.log(`Dependencies containing the keyword '${keyword}' have been removed using ${manager}.`);
         } catch (error) {
             console.error(`Error executing command: ${error}`);

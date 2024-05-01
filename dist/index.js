@@ -65,6 +65,11 @@ function removeDependenciesContainingKeyword(keyword) {
                 const { stdout, stderr } = yield execAsync(command);
                 console.log(stdout);
                 console.error(stderr);
+                // Additional check for removing the .eslintrc.cjs file if keyword is 'eslint'
+                if (keyword === 'eslint' && (0, fs_1.existsSync)('.eslintrc.cjs')) {
+                    (0, fs_1.unlinkSync)('.eslintrc.cjs');
+                    console.log('.eslintrc.cjs file has been removed.');
+                }
                 console.log(`Dependencies containing the keyword '${keyword}' have been removed using ${manager}.`);
             }
             catch (error) {
