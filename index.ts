@@ -23,8 +23,7 @@ async function removeDependenciesContainingKeyword(keyword: string) {
     } else if (existsSync('bun.lockb')) {
         manager = 'bun';
     } else {
-        console.error('Error: Lockfile (package-lock.json, pnpm-lock.yaml, yarn.lock, or bun.lockb) not found in the current directory.');
-        process.exit(1);
+        manager = 'npm';
     }
 
     const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));

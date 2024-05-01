@@ -16,8 +16,4 @@ Alternatively, you can use it like this:
 
 ## Gotcha's
 
-This will use your preferred package manager based on the lock file.
-
-That means you need to have a lock file before using it.
-
-The upside to this is that it will remove dependencies much faster.
+If you do not have a lock file, it will use ``npm`` as a default package manager.

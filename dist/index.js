@@ -36,8 +36,7 @@ function removeDependenciesContainingKeyword(keyword) {
             manager = 'bun';
         }
         else {
-            console.error('Error: Lockfile (package-lock.json, pnpm-lock.yaml, yarn.lock, or bun.lockb) not found in the current directory.');
-            process.exit(1);
+            manager = 'npm';
         }
         const packageJson = JSON.parse((0, fs_1.readFileSync)('package.json', 'utf8'));
         const dependencies = Object.keys(packageJson.dependencies || {});
