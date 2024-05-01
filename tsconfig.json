@@ -3,6 +3,7 @@
     "module": "commonjs",
     "target": "es6",
     "outDir": "./dist",
-    "strict": true
+    "strict": true,
+    "declaration": true  // Generate .d.ts files
   }
 }

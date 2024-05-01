@@ -1,7 +1,8 @@
 {
   "name": "remdep",
-  "version": "1.0.10",
+  "version": "1.0.12",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "remdep": "./dist/index.js"
   },

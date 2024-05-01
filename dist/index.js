@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeDependenciesContainingKeyword = void 0;
 const fs_1 = require("fs");
 const readline_1 = require("readline");
 const child_process_1 = require("child_process");
@@ -73,5 +74,6 @@ function removeDependenciesContainingKeyword(keyword) {
         }));
     });
 }
+exports.removeDependenciesContainingKeyword = removeDependenciesContainingKeyword;
 const keyword = process.argv[2];
 removeDependenciesContainingKeyword(keyword);

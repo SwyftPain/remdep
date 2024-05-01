@@ -67,3 +67,5 @@ async function removeDependenciesContainingKeyword(keyword: string) {
 
 const keyword = process.argv[2];
 removeDependenciesContainingKeyword(keyword);
+
+export { removeDependenciesContainingKeyword };
