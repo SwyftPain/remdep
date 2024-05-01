@@ -6,13 +6,26 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-async function removeDependenciesContainingKeyword(keyword: string) {
-    if (!keyword) {
-        console.error('Usage: remdep <keyword>');
-        process.exit(1);
+function displayHelp() {
+    console.log(`
+Usage: remdep <keyword> [options]
+Options:
+  --help            Display this help message
+  --force           Remove dependencies without confirmation
+  --retry <times>   Retry the remove command on failure, specifying how many times to retry
+Examples:
+  remdep eslint --force
+  remdep eslint --retry 3
+    `);
+}
+
+async function removeDependenciesContainingKeyword(keyword: string, options: { force: boolean, retry: number, help: boolean }) {
+    if (!keyword || options.help) {
+        displayHelp();
+        return;
     }
 
-    let manager: string | undefined;
+    let manager = 'npm';  // Default to npm if no lock file is found
 
     if (existsSync('package-lock.json')) {
         manager = 'npm';
@@ -22,8 +35,6 @@ async function removeDependenciesContainingKeyword(keyword: string) {
         manager = 'yarn';
     } else if (existsSync('bun.lockb')) {
         manager = 'bun';
-    } else {
-        manager = 'npm';
     }
 
     const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -34,31 +45,19 @@ async function removeDependenciesContainingKeyword(keyword: string) {
 
     if (filteredDependencies.length === 0) {
         console.log(`No dependencies found containing the keyword '${keyword}'.`);
-        process.exit(0);
+        return;
     }
 
     console.log('The following dependencies will be removed:');
     filteredDependencies.forEach(dep => console.log(dep));
 
-    const rl = createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-
-    rl.question('Do you want to proceed? (y/n): ', async (answer) => {
-        rl.close();
-        if (answer.toLowerCase() !== 'y') {
-            console.log('Aborted.');
-            process.exit(0);
-        }
-
+    const proceedRemoval = async () => {
         try {
             const command = `${manager} remove ${filteredDependencies.join(' ')}`;
             const { stdout, stderr } = await execAsync(command);
             console.log(stdout);
             console.error(stderr);
 
-            // Additional check for removing the .eslintrc.cjs file if keyword is 'eslint'
             if (keyword === 'eslint' && existsSync('.eslintrc.cjs')) {
                 unlinkSync('.eslintrc.cjs');
                 console.log('.eslintrc.cjs file has been removed.');
@@ -67,12 +66,43 @@ async function removeDependenciesContainingKeyword(keyword: string) {
             console.log(`Dependencies containing the keyword '${keyword}' have been removed using ${manager}.`);
         } catch (error) {
             console.error(`Error executing command: ${error}`);
-            process.exit(1);
+            if (options.retry > 0) {
+                console.log(`Retrying... Attempts left: ${options.retry}`);
+                options.retry--;
+                await proceedRemoval();
+            }
         }
-    });
+    };
+
+    if (options.force) {
+        await proceedRemoval();
+    } else {
+        const rl = createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        rl.question('Do you want to proceed? (y/n): ', async (answer) => {
+            rl.close();
+            if (answer.toLowerCase() === 'y') {
+                await proceedRemoval();
+            } else {
+                console.log('Aborted.');
+            }
+        });
+    }
 }
 
-const keyword = process.argv[2];
-removeDependenciesContainingKeyword(keyword);
+const args = process.argv.slice(2);
+const keyword = args.find(arg => !arg.startsWith('--'));
+const force = args.includes('--force');
+const help = args.includes('--help');
+const retryIndex = args.indexOf('--retry');
+const retry = retryIndex !== -1 ? parseInt(args[retryIndex + 1], 10) : 0;
 
-export { removeDependenciesContainingKeyword };
+if (!keyword) {
+    console.error('Error: No keyword specified.');
+    process.exit(1);
+}
+
+removeDependenciesContainingKeyword(keyword, { force, help, retry });
