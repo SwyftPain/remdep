@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { existsSync, readFileSync } from 'fs';
 import { createInterface } from 'readline';
 import { exec } from 'child_process';
