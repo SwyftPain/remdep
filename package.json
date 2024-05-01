@@ -1,0 +1,19 @@
+{
+  "name": "remdep",
+  "version": "1.0.7",
+  "main": "dist/index.js",
+  "bin": {
+    "remdep": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/index.js"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.8"
+  }
+}
