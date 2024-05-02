@@ -3,25 +3,31 @@ import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { createInterface } from 'readline';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import chalk from 'chalk';
 
 const execAsync = promisify(exec);
 
 function displayHelp() {
-    console.log(`
-Usage: remdep <keyword> [options]
+    console.log(chalk.green(`
+Usage: ${chalk.bold('remdep <keyword> [options]')}
 Options:
-  --help            Display this help message
-  --force           Remove dependencies without confirmation
-  --retry <times>   Retry the remove command on failure, specifying how many times to retry
+  ${chalk.blue('--help')}            Display this help message
+  ${chalk.blue('--force')}           Remove dependencies without confirmation
+  ${chalk.blue('--retry <times>')}   Retry the remove command on failure, specifying how many times to retry
 Examples:
-  remdep eslint --force
-  remdep eslint --retry 3
-    `);
+  ${chalk.yellow('remdep eslint --force')}
+  ${chalk.yellow('remdep eslint --retry 3')}
+    `));
 }
 
-async function removeDependenciesContainingKeyword(keyword: string, options: { force: boolean, retry: number, help: boolean }) {
-    if (!keyword || options.help) {
+async function removeDependenciesContainingKeyword(keyword: string | undefined, options: { force: boolean, retry: number, help: boolean, initialRetry: number }) {
+    if (options.help) {
         displayHelp();
+        return;
+    }
+
+    if (!keyword) {
+        console.error(chalk.red('Error: No keyword specified. Use --help for usage information.'));
         return;
     }
 
@@ -35,6 +41,8 @@ async function removeDependenciesContainingKeyword(keyword: string, options: { f
         manager = 'yarn';
     } else if (existsSync('bun.lockb')) {
         manager = 'bun';
+    } else {
+        console.log(chalk.yellow('No lock file found, defaulting to npm as the package manager.'));
     }
 
     const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -44,32 +52,35 @@ async function removeDependenciesContainingKeyword(keyword: string, options: { f
     const filteredDependencies = allDependencies.filter(dep => dep.includes(keyword));
 
     if (filteredDependencies.length === 0) {
-        console.log(`No dependencies found containing the keyword '${keyword}'.`);
+        console.log(chalk.blue(`No dependencies found containing the keyword '${chalk.bold(keyword)}'.`));
         return;
     }
 
-    console.log('The following dependencies will be removed:');
-    filteredDependencies.forEach(dep => console.log(dep));
+    console.log(chalk.magenta('The following dependencies will be removed:'));
+    filteredDependencies.forEach(dep => console.log(chalk.cyan(dep)));
 
-    const proceedRemoval = async () => {
+    const proceedRemoval = async (attempt = 1) => {
         try {
+            console.log(chalk.magenta(`Removing dependencies using ${manager}. Attempt ${attempt} of ${options.initialRetry + 1}`));
             const command = `${manager} remove ${filteredDependencies.join(' ')}`;
             const { stdout, stderr } = await execAsync(command);
-            console.log(stdout);
-            console.error(stderr);
+            console.log(chalk.green(stdout));
+            if (stderr) {
+                console.error(chalk.red(stderr));
+            }
 
             if (keyword === 'eslint' && existsSync('.eslintrc.cjs')) {
                 unlinkSync('.eslintrc.cjs');
-                console.log('.eslintrc.cjs file has been removed.');
+                console.log(chalk.green('.eslintrc.cjs file has been removed.'));
             }
 
-            console.log(`Dependencies containing the keyword '${keyword}' have been removed using ${manager}.`);
+            console.log(chalk.green(`Dependencies containing the keyword '${chalk.bold(keyword)}' have been removed using ${manager}.`));
         } catch (error) {
-            console.error(`Error executing command: ${error}`);
+            console.error(chalk.red(`Error executing command: ${error}`));
             if (options.retry > 0) {
-                console.log(`Retrying... Attempts left: ${options.retry}`);
+                console.log(chalk.yellow(`Retrying... Attempt ${attempt + 1} of ${options.initialRetry + 1}`));
                 options.retry--;
-                await proceedRemoval();
+                await proceedRemoval(attempt + 1);
             }
         }
     };
@@ -82,12 +93,12 @@ async function removeDependenciesContainingKeyword(keyword: string, options: { f
             output: process.stdout
         });
 
-        rl.question('Do you want to proceed? (y/n): ', async (answer) => {
+        rl.question(chalk.blue('Do you want to proceed? (y/n): '), async (answer) => {
             rl.close();
             if (answer.toLowerCase() === 'y') {
                 await proceedRemoval();
             } else {
-                console.log('Aborted.');
+                console.log(chalk.yellow('Aborted.'));
             }
         });
     }
@@ -100,9 +111,4 @@ const help = args.includes('--help');
 const retryIndex = args.indexOf('--retry');
 const retry = retryIndex !== -1 ? parseInt(args[retryIndex + 1], 10) : 0;
 
-if (!keyword) {
-    console.error('Error: No keyword specified.');
-    process.exit(1);
-}
-
-removeDependenciesContainingKeyword(keyword, { force, help, retry });
+removeDependenciesContainingKeyword(keyword, { force, help, retry, initialRetry: retry });

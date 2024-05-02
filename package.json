@@ -1,7 +1,7 @@
 {
   "name": "remdep",
   "description": "Remove dependencies based on a keyword from a project easy and fast",
-  "version": "1.0.22",
+  "version": "1.0.25",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -19,6 +19,7 @@
   "license": "MIT",
   "author": "SwyftPain",
   "dependencies": {
+    "chalk": "4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
@@ -26,12 +27,20 @@
     "@types/node": "^20.12.8"
   },
   "displayName": "RemDep",
-  "keywords": [""],
-  "maintainers": ["SwyftPain"],
+  "keywords": [
+    ""
+  ],
+  "maintainers": [
+    "SwyftPain"
+  ],
   "publisher": "SwyftPain",
   "release": {
     "repositoryUrl": "https://github.com/SwyftPain/remdep"
   },
   "readme": "./README.md",
-  "trustedDependencies": ["ts-node", "typescript", "@types/node"]
+  "trustedDependencies": [
+    "ts-node",
+    "typescript",
+    "@types/node"
+  ]
 }

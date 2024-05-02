@@ -4,6 +4,7 @@
     "target": "es6",
     "outDir": "./dist",
     "strict": true,
-    "declaration": true  // Generate .d.ts files
+    "declaration": true,
+    "esModuleInterop": true
   }
 }

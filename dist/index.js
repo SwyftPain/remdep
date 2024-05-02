@@ -9,28 +9,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const readline_1 = require("readline");
 const child_process_1 = require("child_process");
 const util_1 = require("util");
+const chalk_1 = __importDefault(require("chalk"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 function displayHelp() {
-    console.log(`
-Usage: remdep <keyword> [options]
+    console.log(chalk_1.default.green(`
+Usage: ${chalk_1.default.bold('remdep <keyword> [options]')}
 Options:
-  --help            Display this help message
-  --force           Remove dependencies without confirmation
-  --retry <times>   Retry the remove command on failure, specifying how many times to retry
+  ${chalk_1.default.blue('--help')}            Display this help message
+  ${chalk_1.default.blue('--force')}           Remove dependencies without confirmation
+  ${chalk_1.default.blue('--retry <times>')}   Retry the remove command on failure, specifying how many times to retry
 Examples:
-  remdep eslint --force
-  remdep eslint --retry 3
-    `);
+  ${chalk_1.default.yellow('remdep eslint --force')}
+  ${chalk_1.default.yellow('remdep eslint --retry 3')}
+    `));
 }
 function removeDependenciesContainingKeyword(keyword, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (!keyword || options.help) {
+        if (options.help) {
             displayHelp();
+            return;
+        }
+        if (!keyword) {
+            console.error(chalk_1.default.red('Error: No keyword specified. Use --help for usage information.'));
             return;
         }
         let manager = 'npm'; // Default to npm if no lock file is found
@@ -46,35 +54,41 @@ function removeDependenciesContainingKeyword(keyword, options) {
         else if ((0, fs_1.existsSync)('bun.lockb')) {
             manager = 'bun';
         }
+        else {
+            console.log(chalk_1.default.yellow('No lock file found, defaulting to npm as the package manager.'));
+        }
         const packageJson = JSON.parse((0, fs_1.readFileSync)('package.json', 'utf8'));
         const dependencies = Object.keys(packageJson.dependencies || {});
         const devDependencies = Object.keys(packageJson.devDependencies || {});
         const allDependencies = dependencies.concat(devDependencies);
         const filteredDependencies = allDependencies.filter(dep => dep.includes(keyword));
         if (filteredDependencies.length === 0) {
-            console.log(`No dependencies found containing the keyword '${keyword}'.`);
+            console.log(chalk_1.default.blue(`No dependencies found containing the keyword '${chalk_1.default.bold(keyword)}'.`));
             return;
         }
-        console.log('The following dependencies will be removed:');
-        filteredDependencies.forEach(dep => console.log(dep));
-        const proceedRemoval = () => __awaiter(this, void 0, void 0, function* () {
+        console.log(chalk_1.default.magenta('The following dependencies will be removed:'));
+        filteredDependencies.forEach(dep => console.log(chalk_1.default.cyan(dep)));
+        const proceedRemoval = (...args_1) => __awaiter(this, [...args_1], void 0, function* (attempt = 1) {
             try {
+                console.log(chalk_1.default.magenta(`Removing dependencies using ${manager}. Attempt ${attempt} of ${options.initialRetry + 1}`));
                 const command = `${manager} remove ${filteredDependencies.join(' ')}`;
                 const { stdout, stderr } = yield execAsync(command);
-                console.log(stdout);
-                console.error(stderr);
+                console.log(chalk_1.default.green(stdout));
+                if (stderr) {
+                    console.error(chalk_1.default.red(stderr));
+                }
                 if (keyword === 'eslint' && (0, fs_1.existsSync)('.eslintrc.cjs')) {
                     (0, fs_1.unlinkSync)('.eslintrc.cjs');
-                    console.log('.eslintrc.cjs file has been removed.');
+                    console.log(chalk_1.default.green('.eslintrc.cjs file has been removed.'));
                 }
-                console.log(`Dependencies containing the keyword '${keyword}' have been removed using ${manager}.`);
+                console.log(chalk_1.default.green(`Dependencies containing the keyword '${chalk_1.default.bold(keyword)}' have been removed using ${manager}.`));
             }
             catch (error) {
-                console.error(`Error executing command: ${error}`);
+                console.error(chalk_1.default.red(`Error executing command: ${error}`));
                 if (options.retry > 0) {
-                    console.log(`Retrying... Attempts left: ${options.retry}`);
+                    console.log(chalk_1.default.yellow(`Retrying... Attempt ${attempt + 1} of ${options.initialRetry + 1}`));
                     options.retry--;
-                    yield proceedRemoval();
+                    yield proceedRemoval(attempt + 1);
                 }
             }
         });
@@ -86,13 +100,13 @@ function removeDependenciesContainingKeyword(keyword, options) {
                 input: process.stdin,
                 output: process.stdout
             });
-            rl.question('Do you want to proceed? (y/n): ', (answer) => __awaiter(this, void 0, void 0, function* () {
+            rl.question(chalk_1.default.blue('Do you want to proceed? (y/n): '), (answer) => __awaiter(this, void 0, void 0, function* () {
                 rl.close();
                 if (answer.toLowerCase() === 'y') {
                     yield proceedRemoval();
                 }
                 else {
-                    console.log('Aborted.');
+                    console.log(chalk_1.default.yellow('Aborted.'));
                 }
             }));
         }
@@ -104,8 +118,4 @@ const force = args.includes('--force');
 const help = args.includes('--help');
 const retryIndex = args.indexOf('--retry');
 const retry = retryIndex !== -1 ? parseInt(args[retryIndex + 1], 10) : 0;
-if (!keyword) {
-    console.error('Error: No keyword specified.');
-    process.exit(1);
-}
-removeDependenciesContainingKeyword(keyword, { force, help, retry });
+removeDependenciesContainingKeyword(keyword, { force, help, retry, initialRetry: retry });
