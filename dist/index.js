@@ -21,24 +21,21 @@ const chalk_1 = __importDefault(require("chalk"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 function displayHelp() {
     console.log(chalk_1.default.green(`
-Usage: ${chalk_1.default.bold('remdep <keyword> [options]')}
+Usage: ${chalk_1.default.bold('remdep <keywords> [options]')}
+Keywords should be comma-separated without spaces.
 Options:
   ${chalk_1.default.blue('--help')}            Display this help message
   ${chalk_1.default.blue('--force')}           Remove dependencies without confirmation
   ${chalk_1.default.blue('--retry <times>')}   Retry the remove command on failure, specifying how many times to retry
 Examples:
-  ${chalk_1.default.yellow('remdep eslint --force')}
-  ${chalk_1.default.yellow('remdep eslint --retry 3')}
+  ${chalk_1.default.yellow('remdep eslint,babel --force')}
+  ${chalk_1.default.yellow('remdep react,vue --retry 3')}
     `));
 }
-function removeDependenciesContainingKeyword(keyword, options) {
+function removeDependenciesContainingKeywords(keywords, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (options.help) {
+        if (options.help || keywords.length === 0) {
             displayHelp();
-            return;
-        }
-        if (!keyword) {
-            console.error(chalk_1.default.red('Error: No keyword specified. Use --help for usage information.'));
             return;
         }
         let manager = 'npm'; // Default to npm if no lock file is found
@@ -61,9 +58,9 @@ function removeDependenciesContainingKeyword(keyword, options) {
         const dependencies = Object.keys(packageJson.dependencies || {});
         const devDependencies = Object.keys(packageJson.devDependencies || {});
         const allDependencies = dependencies.concat(devDependencies);
-        const filteredDependencies = allDependencies.filter(dep => dep.includes(keyword));
+        const filteredDependencies = allDependencies.filter(dep => keywords.some(keyword => dep.includes(keyword)));
         if (filteredDependencies.length === 0) {
-            console.log(chalk_1.default.blue(`No dependencies found containing the keyword '${chalk_1.default.bold(keyword)}'.`));
+            console.log(chalk_1.default.blue(`No dependencies found containing any of the specified keywords: ${chalk_1.default.bold(keywords.join(', '))}.`));
             return;
         }
         console.log(chalk_1.default.magenta('The following dependencies will be removed:'));
@@ -77,11 +74,7 @@ function removeDependenciesContainingKeyword(keyword, options) {
                 if (stderr) {
                     console.error(chalk_1.default.red(stderr));
                 }
-                if (keyword === 'eslint' && (0, fs_1.existsSync)('.eslintrc.cjs')) {
-                    (0, fs_1.unlinkSync)('.eslintrc.cjs');
-                    console.log(chalk_1.default.green('.eslintrc.cjs file has been removed.'));
-                }
-                console.log(chalk_1.default.green(`Dependencies containing the keyword '${chalk_1.default.bold(keyword)}' have been removed using ${manager}.`));
+                console.log(chalk_1.default.green(`Dependencies containing the specified keywords have been removed using ${manager}.`));
             }
             catch (error) {
                 console.error(chalk_1.default.red(`Error executing command: ${error}`));
@@ -113,9 +106,10 @@ function removeDependenciesContainingKeyword(keyword, options) {
     });
 }
 const args = process.argv.slice(2);
-const keyword = args.find(arg => !arg.startsWith('--'));
+const keywordArg = args.find(arg => !arg.startsWith('--'));
+const keywords = keywordArg ? keywordArg.split(',').map(k => k.trim()) : [];
 const force = args.includes('--force');
 const help = args.includes('--help');
 const retryIndex = args.indexOf('--retry');
 const retry = retryIndex !== -1 ? parseInt(args[retryIndex + 1], 10) : 0;
-removeDependenciesContainingKeyword(keyword, { force, help, retry, initialRetry: retry });
+removeDependenciesContainingKeywords(keywords.length > 1 ? keywords : [keywords[0]], { force, help, retry, initialRetry: retry });

@@ -9,25 +9,21 @@ const execAsync = promisify(exec);
 
 function displayHelp() {
     console.log(chalk.green(`
-Usage: ${chalk.bold('remdep <keyword> [options]')}
+Usage: ${chalk.bold('remdep <keywords> [options]')}
+Keywords should be comma-separated without spaces.
 Options:
   ${chalk.blue('--help')}            Display this help message
   ${chalk.blue('--force')}           Remove dependencies without confirmation
   ${chalk.blue('--retry <times>')}   Retry the remove command on failure, specifying how many times to retry
 Examples:
-  ${chalk.yellow('remdep eslint --force')}
-  ${chalk.yellow('remdep eslint --retry 3')}
+  ${chalk.yellow('remdep eslint,babel --force')}
+  ${chalk.yellow('remdep react,vue --retry 3')}
     `));
 }
 
-async function removeDependenciesContainingKeyword(keyword: string | undefined, options: { force: boolean, retry: number, help: boolean, initialRetry: number }) {
-    if (options.help) {
+async function removeDependenciesContainingKeywords(keywords: string[], options: { force: boolean, retry: number, help: boolean, initialRetry: number }) {
+    if (options.help || keywords.length === 0) {
         displayHelp();
-        return;
-    }
-
-    if (!keyword) {
-        console.error(chalk.red('Error: No keyword specified. Use --help for usage information.'));
         return;
     }
 
@@ -49,10 +45,10 @@ async function removeDependenciesContainingKeyword(keyword: string | undefined, 
     const dependencies = Object.keys(packageJson.dependencies || {});
     const devDependencies = Object.keys(packageJson.devDependencies || {});
     const allDependencies = dependencies.concat(devDependencies);
-    const filteredDependencies = allDependencies.filter(dep => dep.includes(keyword));
+    const filteredDependencies = allDependencies.filter(dep => keywords.some(keyword => dep.includes(keyword)));
 
     if (filteredDependencies.length === 0) {
-        console.log(chalk.blue(`No dependencies found containing the keyword '${chalk.bold(keyword)}'.`));
+        console.log(chalk.blue(`No dependencies found containing any of the specified keywords: ${chalk.bold(keywords.join(', '))}.`));
         return;
     }
 
@@ -69,12 +65,7 @@ async function removeDependenciesContainingKeyword(keyword: string | undefined, 
                 console.error(chalk.red(stderr));
             }
 
-            if (keyword === 'eslint' && existsSync('.eslintrc.cjs')) {
-                unlinkSync('.eslintrc.cjs');
-                console.log(chalk.green('.eslintrc.cjs file has been removed.'));
-            }
-
-            console.log(chalk.green(`Dependencies containing the keyword '${chalk.bold(keyword)}' have been removed using ${manager}.`));
+            console.log(chalk.green(`Dependencies containing the specified keywords have been removed using ${manager}.`));
         } catch (error) {
             console.error(chalk.red(`Error executing command: ${error}`));
             if (options.retry > 0) {
@@ -105,10 +96,11 @@ async function removeDependenciesContainingKeyword(keyword: string | undefined, 
 }
 
 const args = process.argv.slice(2);
-const keyword = args.find(arg => !arg.startsWith('--'));
+const keywordArg = args.find(arg => !arg.startsWith('--'));
+const keywords = keywordArg ? keywordArg.split(',').map(k => k.trim()) : [];
 const force = args.includes('--force');
 const help = args.includes('--help');
 const retryIndex = args.indexOf('--retry');
 const retry = retryIndex !== -1 ? parseInt(args[retryIndex + 1], 10) : 0;
 
-removeDependenciesContainingKeyword(keyword, { force, help, retry, initialRetry: retry });
+removeDependenciesContainingKeywords(keywords.length > 1 ? keywords : [keywords[0]], { force, help, retry, initialRetry: retry });
