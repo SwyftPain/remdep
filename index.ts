@@ -73,6 +73,11 @@ async function removeDependenciesContainingKeywords(
     );
   }
 
+  if (!existsSync("package.json")) {
+    console.error(chalk.red("Error: No package.json file found in the current directory."));
+    return;
+  }
+
   const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
   const dependencies = Object.keys(packageJson.dependencies || {});
   const devDependencies = Object.keys(packageJson.devDependencies || {});

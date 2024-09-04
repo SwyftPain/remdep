@@ -60,6 +60,10 @@ function removeDependenciesContainingKeywords(keywords, options) {
         else {
             console.log(chalk_1.default.yellow("No lock file found, defaulting to npm as the package manager."));
         }
+        if (!(0, fs_1.existsSync)("package.json")) {
+            console.error(chalk_1.default.red("Error: No package.json file found in the current directory."));
+            return;
+        }
         const packageJson = JSON.parse((0, fs_1.readFileSync)("package.json", "utf8"));
         const dependencies = Object.keys(packageJson.dependencies || {});
         const devDependencies = Object.keys(packageJson.devDependencies || {});
