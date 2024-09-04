@@ -98,30 +98,30 @@ program
         case comparisonResult > 0:
           console.log(
             chalk.yellow(
-              `RemDep has a new version: ${npmVersion}. Your version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest\n\n`
+              `RemDep has a new version: ${npmVersion}. Your version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest\n`
             )
           );
           break;
         case comparisonResult < 0:
           console.log(
             chalk.red(
-              `You are running a higher version than is available.\nNPM version: ${npmVersion}. Your version: ${thisProjectJson.version}.\n\n`
+              `You are running a higher version than is available.\nNPM version: ${npmVersion}. Your version: ${thisProjectJson.version}.\n`
             )
           );
           break;
         case comparisonResult === 0:
           console.log(
             chalk.green(
-              `You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}.\n\n`
+              `You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}.\n`
             )
           );
           break;
         default:
-          console.log(`Unexpected comparison result.\n\n`);
+          console.log(`Unexpected comparison result.\n`);
           break;
       }
     } catch (err) {
-      console.error(chalk.red(`Error getting NPM version: ${err}\n\n`));
+      console.error(chalk.red(`Error getting NPM version: ${err}\n`));
     }
 
     const keywordList = keywords.split(",").map((k) => k.trim());
