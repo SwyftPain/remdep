@@ -73,7 +73,7 @@ Add an option that creates a backup of the current package.json before removal. 
 
 Optional with a flag.
 
-+ ### Skip used
++ ### Skip Used
 Skip matching dependencies if they are currently being used/imported in a project.
 
 Optional with a flag.
