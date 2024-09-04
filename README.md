@@ -27,6 +27,7 @@ You can pass flags:
 ``--force`` to remove the confirmation prompt.
 ``--retry <#>`` to specify how many times to retry in case of an error.
 ``--help`` to print help information.
+``--version`` to print the version.
 
 ## Examples:
 
