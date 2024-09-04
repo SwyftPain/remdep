@@ -1,7 +1,7 @@
 {
   "name": "remdep",
   "description": "Remove dependencies based on a keyword from a project easy and fast",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./dist/index.js",
-    "finish": "tsc && npm publish && git add . && git commit -m 'Publish' && git push"
+    "finish": "tsc && npm publish && git add . && git commit -m 'Publish' && git push --force"
   },
   "repository": {
     "url": "https://github.com/SwyftPain/remdep.git",
