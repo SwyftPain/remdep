@@ -72,3 +72,7 @@ Optional with a flag.
 Add an option that creates a backup of the current package.json before removal. Afterwards, provide an option to restore and reinstall packages using preferred package manager.
 
 Optional with a flag.
+
+## Example
+
+![Screenshot Of The App In Action](https://i.imgur.com/cZqY2kt.png)
