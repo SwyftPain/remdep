@@ -98,21 +98,21 @@ program
         case comparisonResult > 0:
           console.log(
             chalk.yellow(
-              `RemDep has a new version: ${npmVersion}. Your version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest\n`
+              `RemDep has a new version: "${npmVersion}". Your version: "${thisProjectJson.version}".\nUpdate by running:\nnpm install -g remdep@latest\n`
             )
           );
           break;
         case comparisonResult < 0:
           console.log(
             chalk.red(
-              `You are running a higher version than is available.\nNPM version: ${npmVersion}. Your version: ${thisProjectJson.version}.\n`
+              `You are running a higher version than is available.\nNPM version: "${npmVersion}". Your version: "${thisProjectJson.version}".\n`
             )
           );
           break;
         case comparisonResult === 0:
           console.log(
             chalk.green(
-              `You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}.\n`
+              `You have the latest version of RemDep. NPM version: "${npmVersion}" is equal to "${thisProjectJson.version}".\n`
             )
           );
           break;

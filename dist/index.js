@@ -89,13 +89,13 @@ program
         const comparisonResult = compareVersions(npmVersion, thisProjectJson.version);
         switch (true) {
             case comparisonResult > 0:
-                console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}. Your version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest\n`));
+                console.log(chalk_1.default.yellow(`RemDep has a new version: "${npmVersion}". Your version: "${thisProjectJson.version}".\nUpdate by running:\nnpm install -g remdep@latest\n`));
                 break;
             case comparisonResult < 0:
-                console.log(chalk_1.default.red(`You are running a higher version than is available.\nNPM version: ${npmVersion}. Your version: ${thisProjectJson.version}.\n`));
+                console.log(chalk_1.default.red(`You are running a higher version than is available.\nNPM version: "${npmVersion}". Your version: "${thisProjectJson.version}".\n`));
                 break;
             case comparisonResult === 0:
-                console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}.\n`));
+                console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: "${npmVersion}" is equal to "${thisProjectJson.version}".\n`));
                 break;
             default:
                 console.log(`Unexpected comparison result.\n`);
