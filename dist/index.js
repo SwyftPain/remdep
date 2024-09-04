@@ -22,12 +22,38 @@ const readline_1 = require("readline");
 const path_1 = __importDefault(require("path"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const program = new commander_1.Command();
+/**
+ * Takes a version string (e.g. "1.2.3") and splits it into an array of numbers
+ * (e.g. [1, 2, 3])
+ *
+ * @param {string} version - The version string to parse
+ * @returns {number[]} - The version as an array of numbers
+ */
 const parseVersion = (version) => {
     return version.split(".").map(Number);
 };
 // Read package.json of this project
 const packageJsonPath = path_1.default.join(__dirname, "..", "package.json");
 const thisProjectJson = JSON.parse((0, fs_1.readFileSync)(packageJsonPath, "utf8"));
+/**
+ * Compares two version strings (e.g. "1.2.3") and returns a number indicating
+ * the result of the comparison.
+ *
+ * The comparison is performed by comparing the major, minor, and patch
+ * numbers of the two version strings. If the major numbers are different,
+ * the comparison result is based on them. If the minor numbers are different,
+ * the comparison result is based on them. Otherwise, the comparison result is
+ * based on the patch numbers.
+ *
+ * The return value is one of the following:
+ * * 1 if version1 is greater than version2
+ * * -1 if version1 is less than version2
+ * * 0 if version1 is equal to version2
+ *
+ * @param {string} version1 - The first version string to compare
+ * @param {string} version2 - The second version string to compare
+ * @returns {number} - The result of the comparison
+ */
 const compareVersions = (version1, version2) => {
     const [major1, minor1, patch1] = parseVersion(version1);
     const [major2, minor2, patch2] = parseVersion(version2);
@@ -55,19 +81,25 @@ program
     .version(thisProjectJson.version, "-v, --version", "Output the current version")
     .helpOption("-h, --help", "Display help for command")
     .action((keywords, options) => __awaiter(void 0, void 0, void 0, function* () {
+    // Check for updates
     try {
         const data = yield fetch("https://registry.npmjs.org/remdep");
         const result = yield data.json();
         const npmVersion = result["dist-tags"].latest;
         const comparisonResult = compareVersions(npmVersion, thisProjectJson.version);
-        if (comparisonResult > 0) {
-            console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`));
-        }
-        else if (comparisonResult < 0) {
-            console.log(chalk_1.default.red(`You are running higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`));
-        }
-        else {
-            console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`));
+        switch (true) {
+            case comparisonResult > 0:
+                console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`));
+                break;
+            case comparisonResult < 0:
+                console.log(chalk_1.default.red(`You are running a higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`));
+                break;
+            case comparisonResult === 0:
+                console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`));
+                break;
+            default:
+                console.log("Unexpected comparison result.");
+                break;
         }
     }
     catch (err) {
