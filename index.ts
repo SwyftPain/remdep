@@ -69,6 +69,7 @@ program
   .description("Remove dependencies from package.json by specifying keywords.")
   .argument("<keywords>", "Comma-separated list of keywords")
   .option("-f, --force", "Remove dependencies without confirmation")
+  .option("-d, --dry-run", "Dry run the remove command")
   .option(
     "-r, --retry <times>",
     "Retry the remove command on failure",
@@ -192,6 +193,8 @@ async function removeDependenciesContainingKeywords(
 
     return;
   }
+
+  console.log(options)
 
   // Log dependencies to be removed
   console.log(

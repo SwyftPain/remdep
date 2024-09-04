@@ -77,6 +77,7 @@ program
     .description("Remove dependencies from package.json by specifying keywords.")
     .argument("<keywords>", "Comma-separated list of keywords")
     .option("-f, --force", "Remove dependencies without confirmation")
+    .option("-d, --dry-run", "Dry run the remove command")
     .option("-r, --retry <times>", "Retry the remove command on failure", parseInt, 0)
     .version(thisProjectJson.version, "-v, --version", "Output the current version")
     .helpOption("-h, --help", "Display help for command")
@@ -145,6 +146,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
             console.log(chalk_1.default.blue(`No dependencies found containing any of the specified keywords: ${chalk_1.default.bold(keywords.join(", "))}.`));
             return;
         }
+        console.log(options);
         // Log dependencies to be removed
         console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:\n`));
         filteredDependencies.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
