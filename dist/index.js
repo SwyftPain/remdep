@@ -76,7 +76,7 @@ program
     .name("remdep")
     .description("Remove dependencies from package.json by specifying keywords.")
     .argument("<keywords>", "Comma-separated list of keywords")
-    .option("-f, --force", "Remove dependencies without confirmation")
+    .option("-f, --force", "Remove dependencies without confirmation", false)
     .option("-d, --dry-run", "Dry run the remove command", false)
     .option("-r, --retry <times>", "Retry the remove command on failure", parseInt, 0)
     .version(thisProjectJson.version, "-v, --version", "Output the current version")
