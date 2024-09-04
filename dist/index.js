@@ -80,6 +80,10 @@ program
     .option("-d, --dry-run", "Dry run the remove command", false)
     .option("-r, --retry <times>", "Retry the remove command on failure", parseInt, 0)
     .version(thisProjectJson.version, "-v, --version", "Output the current version")
+    .showHelpAfterError(true)
+    .showSuggestionAfterError(true)
+    .summary("Remove dependencies from package.json by specifying keywords.")
+    .usage("<keywords> [options]")
     .helpOption("-h, --help", "Display help for command")
     .action((keywords, options) => __awaiter(void 0, void 0, void 0, function* () {
     // Check for updates

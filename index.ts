@@ -81,6 +81,10 @@ program
     "-v, --version",
     "Output the current version"
   )
+  .showHelpAfterError(true)
+  .showSuggestionAfterError(true)
+  .summary("Remove dependencies from package.json by specifying keywords.")
+  .usage("<keywords> [options]")
   .helpOption("-h, --help", "Display help for command")
   .action(async (keywords: string, options: Options) => {
     // Check for updates
