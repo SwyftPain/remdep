@@ -219,7 +219,7 @@ function proceedRemoval(manager, dependencies, retries) {
         // For each attempt execute the command
         for (let attempt = 1; attempt <= retries + 1; attempt++) {
             try {
-                console.log(chalk_1.default.magenta(`\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}\n\n`));
+                console.log(chalk_1.default.magenta(`\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
                 // Execute the command
                 const command = `${manager} remove ${dependencies.join(" ")}`;
                 const { stdout, stderr } = yield execAsync(command);
@@ -228,15 +228,15 @@ function proceedRemoval(manager, dependencies, retries) {
                 // Log any errors
                 if (stderr)
                     console.error(chalk_1.default.red(stderr));
-                console.log(chalk_1.default.green(`\n\nDependencies removed successfully using ${manager}.\n\n`));
+                console.log(chalk_1.default.green(`\n\nDependencies removed successfully using ${manager}.`));
                 break;
             }
             catch (error) {
-                console.error(chalk_1.default.red(`\n\nError executing command: ${error}\n\n`));
+                console.error(chalk_1.default.red(`\n\nError executing command: ${error}`));
                 // If this was the last attempt, throw the error
                 if (attempt > retries)
                     throw error;
-                console.log(chalk_1.default.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}\n\n`));
+                console.log(chalk_1.default.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}`));
             }
         }
     });

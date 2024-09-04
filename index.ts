@@ -286,7 +286,7 @@ async function proceedRemoval(
         chalk.magenta(
           `\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${
             retries + 1
-          }\n\n`
+          }`
         )
       );
 
@@ -301,16 +301,16 @@ async function proceedRemoval(
       if (stderr) console.error(chalk.red(stderr));
 
       console.log(
-        chalk.green(`\n\nDependencies removed successfully using ${manager}.\n\n`)
+        chalk.green(`\n\nDependencies removed successfully using ${manager}.`)
       );
       break;
     } catch (error) {
-      console.error(chalk.red(`\n\nError executing command: ${error}\n\n`));
+      console.error(chalk.red(`\n\nError executing command: ${error}`));
 
       // If this was the last attempt, throw the error
       if (attempt > retries) throw error;
       console.log(
-        chalk.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}\n\n`)
+        chalk.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}`)
       );
     }
   }
