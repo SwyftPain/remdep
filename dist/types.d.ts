@@ -10,5 +10,6 @@ interface Options {
     retry: number;
     help: boolean;
     initialRetry: number;
+    dryRun: boolean;
 }
 export type { Deps, JSON, Options };
