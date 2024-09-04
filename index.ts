@@ -1,173 +1,122 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from "fs";
-import { createInterface } from "readline";
-import { exec } from "child_process";
-import { promisify } from "util";
-import chalk from "chalk";
+
+import { existsSync, readFileSync } from 'fs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import chalk from 'chalk';
+import { Command } from 'commander';
+import { createInterface } from 'readline';
 
 const execAsync = promisify(exec);
+const program = new Command();
 
-function displayHelp() {
-  console.log(
-    chalk.green(`
-Usage: ${chalk.bold("remdep <keywords> [options]")}
-Keywords should be comma-separated without spaces.
-Options:
-  ${chalk.blue("--help")}            Display this help message
-  ${chalk.blue("--force")}           Remove dependencies without confirmation
-  ${chalk.blue(
-    "--retry <times>"
-  )}   Retry the remove command on failure, specifying how many times to retry
-Examples:
-  ${chalk.yellow("remdep eslint,babel --force")}
-  ${chalk.yellow("remdep react,vue --retry 3")}
-    `)
+program
+  .name('remdep')
+  .description('Remove dependencies from package.json by specifying keywords.')
+  .argument('<keywords>', 'Comma-separated list of keywords')
+  .option('-f, --force', 'Remove dependencies without confirmation')
+  .option('-r, --retry <times>', 'Retry the remove command on failure', parseInt, 0)
+  .helpOption('-h, --help', 'Display help for command')
+  .action(async (keywords, options) => {
+    const keywordList = keywords.split(',').map(k => k.trim());
+
+    if (keywordList.some(k => k === '')) {
+      console.error(chalk.red('Error: Keywords should be comma-separated without spaces or empty elements.'));
+      process.exit(1);
+    }
+
+    await removeDependenciesContainingKeywords(keywordList, options);
+  });
+
+program.parse(process.argv);
+
+async function removeDependenciesContainingKeywords(keywords, options) {
+  const manager = detectPackageManager();
+  if (!manager) {
+    console.error(chalk.red('Error: No package manager lock file found. Ensure you are in a Node.js project directory.'));
+    process.exit(1);
+  }
+
+  const packageJson = loadPackageJson();
+  if (!packageJson) {
+    console.error(chalk.red('Error: No package.json file found in the current directory.'));
+    process.exit(1);
+  }
+
+  const filteredDependencies = findDependencies(packageJson, keywords);
+
+  if (filteredDependencies.length === 0) {
+    console.log(chalk.blue(`No dependencies found containing any of the specified keywords: ${chalk.bold(keywords.join(', '))}.`));
+    return;
+  }
+
+  console.log(chalk.magenta('The following dependencies will be removed:'));
+  filteredDependencies.forEach(dep => console.log(chalk.cyan(dep)));
+
+  if (options.force) {
+    await proceedRemoval(manager, filteredDependencies, options.retry);
+  } else {
+    const confirmation = await askConfirmation();
+    if (confirmation) {
+      await proceedRemoval(manager, filteredDependencies, options.retry);
+    } else {
+      console.log(chalk.yellow('Aborted.'));
+    }
+  }
+}
+
+function detectPackageManager() {
+  if (existsSync('package-lock.json')) return 'npm';
+  if (existsSync('pnpm-lock.yaml')) return 'pnpm';
+  if (existsSync('yarn.lock')) return 'yarn';
+  if (existsSync('bun.lockb')) return 'bun';
+  console.log(chalk.yellow('No lock file found, defaulting to npm as the package manager.'));
+  return 'npm';
+}
+
+function loadPackageJson() {
+  try {
+    return JSON.parse(readFileSync('package.json', 'utf8'));
+  } catch (error) {
+    return null;
+  }
+}
+
+function findDependencies(packageJson, keywords) {
+  const dependencies = Object.keys(packageJson.dependencies || {});
+  const devDependencies = Object.keys(packageJson.devDependencies || {});
+  return [...dependencies, ...devDependencies].filter(dep => 
+    keywords.some(keyword => dep.includes(keyword))
   );
 }
 
-async function removeDependenciesContainingKeywords(
-  keywords: string[],
-  options: {
-    force: boolean;
-    retry: number;
-    help: boolean;
-    initialRetry: number;
-  }
-) {
-  if (options.help || keywords.length === 0) {
-    displayHelp();
-    return;
-  }
-
-  if (
-    keywords.some(
-      (keyword) =>
-        keyword !== undefined &&
-        (keyword.trim() === "" || keyword.includes(" "))
-    ) ||
-    keywords.some((keyword) => keyword === undefined)
-  ) {
-    console.log(
-      chalk.red(
-        "Error: Keywords should be comma-separated without spaces or empty elements."
-      )
-    );
-    return;
-  }
-
-  let manager = "npm"; // Default to npm if no lock file is found
-
-  if (existsSync("package-lock.json")) {
-    manager = "npm";
-  } else if (existsSync("pnpm-lock.yaml")) {
-    manager = "pnpm";
-  } else if (existsSync("yarn.lock")) {
-    manager = "yarn";
-  } else if (existsSync("bun.lockb")) {
-    manager = "bun";
-  } else {
-    console.log(
-      chalk.yellow(
-        "No lock file found, defaulting to npm as the package manager."
-      )
-    );
-  }
-
-  if (!existsSync("package.json")) {
-    console.error(
-      chalk.red("Error: No package.json file found in the current directory.")
-    );
-    return;
-  }
-
-  const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
-  const dependencies = Object.keys(packageJson.dependencies || {});
-  const devDependencies = Object.keys(packageJson.devDependencies || {});
-  const allDependencies = dependencies.concat(devDependencies);
-  const filteredDependencies = allDependencies.filter((dep) =>
-    keywords.some((keyword) => dep.includes(keyword))
-  );
-
-  if (filteredDependencies.length === 0) {
-    console.log(
-      chalk.blue(
-        `No dependencies found containing any of the specified keywords: ${chalk.bold(
-          keywords.join(", ")
-        )}.`
-      )
-    );
-    return;
-  }
-
-  console.log(chalk.magenta("The following dependencies will be removed:"));
-  filteredDependencies.forEach((dep) => console.log(chalk.cyan(dep)));
-
-  const proceedRemoval = async (attempt = 1) => {
+async function proceedRemoval(manager, dependencies, retries) {
+  for (let attempt = 1; attempt <= retries + 1; attempt++) {
     try {
-      console.log(
-        chalk.magenta(
-          `Removing dependencies using ${manager}. Attempt ${attempt} of ${
-            options.initialRetry + 1
-          }`
-        )
-      );
-      const command = `${manager} remove ${filteredDependencies.join(" ")}`;
+      console.log(chalk.magenta(`Removing dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
+      const command = `${manager} remove ${dependencies.join(' ')}`;
       const { stdout, stderr } = await execAsync(command);
       console.log(chalk.green(stdout));
-      if (stderr) {
-        console.error(chalk.red(stderr));
-      }
-
-      console.log(
-        chalk.green(
-          `Dependencies containing the specified keywords have been removed using ${manager}.`
-        )
-      );
+      if (stderr) console.error(chalk.red(stderr));
+      console.log(chalk.green('Dependencies removed successfully.'));
+      break;
     } catch (error) {
       console.error(chalk.red(`Error executing command: ${error}`));
-      if (options.retry > 0) {
-        console.log(
-          chalk.yellow(
-            `Retrying... Attempt ${attempt + 1} of ${options.initialRetry + 1}`
-          )
-        );
-        options.retry--;
-        await proceedRemoval(attempt + 1);
-      }
+      if (attempt > retries) throw error;
+      console.log(chalk.yellow(`Retrying... Attempt ${attempt + 1} of ${retries + 1}`));
     }
-  };
+  }
+}
 
-  if (options.force) {
-    await proceedRemoval();
-  } else {
+function askConfirmation() {
+  return new Promise((resolve) => {
     const rl = createInterface({
       input: process.stdin,
       output: process.stdout,
     });
-
-    rl.question(
-      chalk.blue("Do you want to proceed? (y/n): "),
-      async (answer) => {
-        rl.close();
-        if (answer.toLowerCase() === "y") {
-          await proceedRemoval();
-        } else {
-          console.log(chalk.yellow("Aborted."));
-        }
-      }
-    );
-  }
+    rl.question(chalk.blue('Do you want to proceed? (y/n): '), (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y');
+    });
+  });
 }
-
-const args = process.argv.slice(2);
-const keywordArg = args.find((arg) => !arg.startsWith("--"));
-const keywords = keywordArg ? keywordArg.split(",").map((k) => k.trim()) : [];
-const force = args.includes("--force");
-const help = args.includes("--help");
-const retryIndex = args.indexOf("--retry");
-const retry = retryIndex !== -1 ? parseInt(args[retryIndex + 1], 10) : 0;
-
-removeDependenciesContainingKeywords(
-  keywords.length > 1 ? keywords : [keywords[0]],
-  { force, help, retry, initialRetry: retry }
-);

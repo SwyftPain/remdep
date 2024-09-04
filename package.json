@@ -1,7 +1,7 @@
 {
   "name": "remdep",
   "description": "Remove dependencies based on a keyword from a project easy and fast",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -20,6 +20,7 @@
   "author": "SwyftPain",
   "dependencies": {
     "chalk": "4",
+    "commander": "^12.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
