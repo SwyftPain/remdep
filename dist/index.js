@@ -45,24 +45,6 @@ const compareVersions = (version1, version2) => {
         return -1;
     return 0; // Versions are equal
 };
-fetch("https://registry.npmjs.org/remdep")
-    .then((res) => res.json())
-    .then((data) => {
-    const npmVersion = data["dist-tags"].latest;
-    const comparisonResult = compareVersions(npmVersion, thisProjectJson.version);
-    if (comparisonResult > 0) {
-        console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`));
-    }
-    else if (comparisonResult < 0) {
-        console.log(chalk_1.default.red(`You are running higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`));
-    }
-    else {
-        console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`));
-    }
-})
-    .catch((err) => {
-    console.error(chalk_1.default.red(`Error getting NPM version: ${err}`));
-});
 // Set up command options
 program
     .name("remdep")
@@ -73,6 +55,24 @@ program
     .version(thisProjectJson.version, "-v, --version", "Output the current version")
     .helpOption("-h, --help", "Display help for command")
     .action((keywords, options) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield fetch("https://registry.npmjs.org/remdep");
+        const result = yield data.json();
+        const npmVersion = result["dist-tags"].latest;
+        const comparisonResult = compareVersions(npmVersion, thisProjectJson.version);
+        if (comparisonResult > 0) {
+            console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`));
+        }
+        else if (comparisonResult < 0) {
+            console.log(chalk_1.default.red(`You are running higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`));
+        }
+        else {
+            console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`));
+        }
+    }
+    catch (err) {
+        console.error(chalk_1.default.red(`Error getting NPM version: ${err}`));
+    }
     const keywordList = keywords.split(",").map((k) => k.trim());
     // Check if keywords are valid
     if (keywordList.some((k) => k === "")) {
