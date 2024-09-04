@@ -43,7 +43,7 @@
   "license": "MIT",
   "author": "SwyftPain",
   "dependencies": {
-    "chalk": "4",
+    "chalk": "5",
     "commander": "^12.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
