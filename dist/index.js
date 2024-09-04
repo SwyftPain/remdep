@@ -19,43 +19,66 @@ const util_1 = require("util");
 const chalk_1 = __importDefault(require("chalk"));
 const commander_1 = require("commander");
 const readline_1 = require("readline");
+const path_1 = __importDefault(require("path"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const program = new commander_1.Command();
+// Read package.json of this project
+const packageJsonPath = path_1.default.join(__dirname, "..", "package.json");
+const thisProjectJson = JSON.parse((0, fs_1.readFileSync)(packageJsonPath, "utf8"));
+// Set up command options
 program
     .name("remdep")
     .description("Remove dependencies from package.json by specifying keywords.")
     .argument("<keywords>", "Comma-separated list of keywords")
     .option("-f, --force", "Remove dependencies without confirmation")
     .option("-r, --retry <times>", "Retry the remove command on failure", parseInt, 0)
+    .version(thisProjectJson.version, "-v, --version", "Output the current version")
     .helpOption("-h, --help", "Display help for command")
     .action((keywords, options) => __awaiter(void 0, void 0, void 0, function* () {
     const keywordList = keywords.split(",").map((k) => k.trim());
+    // Check if keywords are valid
     if (keywordList.some((k) => k === "")) {
         console.error(chalk_1.default.red("Error: Keywords should be comma-separated without spaces or empty elements."));
         process.exit(1);
     }
+    // Remove dependencies
     yield removeDependenciesContainingKeywords(keywordList, options);
 }));
 program.parse(process.argv);
+/**
+ * Removes dependencies from package.json by specifying keywords.
+ *
+ * @param {string[]} keywords - Comma-separated list of keywords to remove
+ * @param {Options} options - Options to customize behavior
+ * @returns {Promise<void>} - Resolves when dependencies have been removed
+ */
 function removeDependenciesContainingKeywords(keywords, options) {
     return __awaiter(this, void 0, void 0, function* () {
+        // Detect package manager
         const manager = detectPackageManager();
+        // Check if package manager lock file exists
         if (!manager) {
             console.error(chalk_1.default.red("Error: No package manager lock file found. Ensure you are in a Node.js project directory."));
             process.exit(1);
         }
+        // Load package.json
         const packageJson = loadPackageJson();
+        // Check if package.json exists
         if (!packageJson) {
             console.error(chalk_1.default.red("Error: No package.json file found in the current directory."));
             process.exit(1);
         }
+        // Find dependencies containing keywords
         const filteredDependencies = findDependencies(packageJson, keywords);
+        // Check if any dependencies were found
         if (filteredDependencies.length === 0) {
             console.log(chalk_1.default.blue(`No dependencies found containing any of the specified keywords: ${chalk_1.default.bold(keywords.join(", "))}.`));
             return;
         }
+        // Log dependencies to be removed
         console.log(chalk_1.default.magenta("The following dependencies will be removed:"));
         filteredDependencies.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
+        // Prompt user for confirmation if --force is not set, otherwise proceed
         if (options.force) {
             yield proceedRemoval(manager, filteredDependencies, options.retry);
         }
@@ -70,6 +93,11 @@ function removeDependenciesContainingKeywords(keywords, options) {
         }
     });
 }
+/**
+ * Detects the package manager to use based on the presence of lock files.
+ *
+ * @returns The name of the package manager to use.
+ */
 function detectPackageManager() {
     if ((0, fs_1.existsSync)("package-lock.json"))
         return "npm";
@@ -82,6 +110,12 @@ function detectPackageManager() {
     console.log(chalk_1.default.yellow("No lock file found, defaulting to npm as the package manager."));
     return "npm";
 }
+/**
+ * Loads package.json from the current working directory and returns it as a JSON
+ * object, or null if the file does not exist or is invalid.
+ *
+ * @returns {JSON|null} The package.json object, or null if it could not be loaded.
+ */
 function loadPackageJson() {
     try {
         return JSON.parse((0, fs_1.readFileSync)("package.json", "utf8"));
@@ -90,19 +124,38 @@ function loadPackageJson() {
         return null;
     }
 }
+/**
+ * Finds all dependencies in package.json that match any of the given keywords.
+ *
+ * @param packageJson The package.json object
+ * @param keywords The keywords to search for
+ * @returns An array of dependency names that match any of the given keywords
+ */
 function findDependencies(packageJson, keywords) {
     const dependencies = Object.keys(packageJson.dependencies || {});
     const devDependencies = Object.keys(packageJson.devDependencies || {});
     return [...dependencies, ...devDependencies].filter((dep) => keywords.some((keyword) => dep.includes(keyword)));
 }
+/**
+ * Attempts to remove the given dependencies using the given package manager.
+ * If the command fails, it will retry up to the given number of times.
+ *
+ * @param manager The package manager to use (e.g. "npm", "yarn", "pnpm")
+ * @param dependencies The list of dependencies to remove
+ * @param retries The number of times to retry if the command fails
+ */
 function proceedRemoval(manager, dependencies, retries) {
     return __awaiter(this, void 0, void 0, function* () {
+        // For each attempt execute the command
         for (let attempt = 1; attempt <= retries + 1; attempt++) {
             try {
                 console.log(chalk_1.default.magenta(`Removing dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
+                // Execute the command
                 const command = `${manager} remove ${dependencies.join(" ")}`;
                 const { stdout, stderr } = yield execAsync(command);
+                // Log the output
                 console.log(chalk_1.default.green(stdout));
+                // Log any errors
                 if (stderr)
                     console.error(chalk_1.default.red(stderr));
                 console.log(chalk_1.default.green("Dependencies removed successfully."));
@@ -110,6 +163,7 @@ function proceedRemoval(manager, dependencies, retries) {
             }
             catch (error) {
                 console.error(chalk_1.default.red(`Error executing command: ${error}`));
+                // If this was the last attempt, throw the error
                 if (attempt > retries)
                     throw error;
                 console.log(chalk_1.default.yellow(`Retrying... Attempt ${attempt + 1} of ${retries + 1}`));
@@ -117,12 +171,19 @@ function proceedRemoval(manager, dependencies, retries) {
         }
     });
 }
+/**
+ * Asks the user for confirmation and returns a promise that resolves to true if the user confirms
+ * or false if they do not.
+ *
+ * @returns {Promise<boolean>}
+ */
 function askConfirmation() {
     return new Promise((resolve) => {
         const rl = (0, readline_1.createInterface)({
             input: process.stdin,
             output: process.stdout,
         });
+        // Ask the user for confirmation
         rl.question(chalk_1.default.blue("Do you want to proceed? (y/n): "), (answer) => {
             rl.close();
             resolve(answer.toLowerCase() === "y");
