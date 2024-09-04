@@ -74,7 +74,9 @@ async function removeDependenciesContainingKeywords(
   }
 
   if (!existsSync("package.json")) {
-    console.error(chalk.red("Error: No package.json file found in the current directory."));
+    console.error(
+      chalk.red("Error: No package.json file found in the current directory.")
+    );
     return;
   }
 
