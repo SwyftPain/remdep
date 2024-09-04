@@ -22,9 +22,47 @@ const readline_1 = require("readline");
 const path_1 = __importDefault(require("path"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const program = new commander_1.Command();
+const parseVersion = (version) => {
+    return version.split(".").map(Number);
+};
 // Read package.json of this project
 const packageJsonPath = path_1.default.join(__dirname, "..", "package.json");
 const thisProjectJson = JSON.parse((0, fs_1.readFileSync)(packageJsonPath, "utf8"));
+const compareVersions = (version1, version2) => {
+    const [major1, minor1, patch1] = parseVersion(version1);
+    const [major2, minor2, patch2] = parseVersion(version2);
+    if (major1 > major2)
+        return 1;
+    if (major1 < major2)
+        return -1;
+    if (minor1 > minor2)
+        return 1;
+    if (minor1 < minor2)
+        return -1;
+    if (patch1 > patch2)
+        return 1;
+    if (patch1 < patch2)
+        return -1;
+    return 0; // Versions are equal
+};
+fetch("https://registry.npmjs.org/remdep")
+    .then((res) => res.json())
+    .then((data) => {
+    const npmVersion = data["dist-tags"].latest;
+    const comparisonResult = compareVersions(npmVersion, thisProjectJson.version);
+    if (comparisonResult > 0) {
+        console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`));
+    }
+    else if (comparisonResult < 0) {
+        console.log(chalk_1.default.red(`You are running higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`));
+    }
+    else {
+        console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`));
+    }
+})
+    .catch((err) => {
+    console.error(chalk_1.default.red(`Error getting NPM version: ${err}`));
+});
 // Set up command options
 program
     .name("remdep")

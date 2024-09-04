@@ -12,9 +12,63 @@ import type { Deps, JSON, Options } from "./types";
 const execAsync = promisify(exec);
 const program = new Command();
 
+const parseVersion = (version: string) => {
+  return version.split(".").map(Number);
+};
+
 // Read package.json of this project
 const packageJsonPath = path.join(__dirname, "..", "package.json");
 const thisProjectJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+
+const compareVersions = (version1: string, version2: string) => {
+  const [major1, minor1, patch1] = parseVersion(version1);
+  const [major2, minor2, patch2] = parseVersion(version2);
+
+  if (major1 > major2) return 1;
+  if (major1 < major2) return -1;
+
+  if (minor1 > minor2) return 1;
+  if (minor1 < minor2) return -1;
+
+  if (patch1 > patch2) return 1;
+  if (patch1 < patch2) return -1;
+
+  return 0; // Versions are equal
+};
+
+fetch("https://registry.npmjs.org/remdep")
+  .then((res) => res.json())
+  .then((data) => {
+    const npmVersion = data["dist-tags"].latest;
+
+    const comparisonResult = compareVersions(
+      npmVersion,
+      thisProjectJson.version
+    );
+
+    if (comparisonResult > 0) {
+      console.log(
+        chalk.yellow(
+          `RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`
+        )
+      );
+    } else if (comparisonResult < 0) {
+      console.log(
+        chalk.red(
+          `You are running higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`
+        )
+      );
+    } else {
+      console.log(
+        chalk.green(
+          `You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`
+        )
+      );
+    }
+  })
+  .catch((err) => {
+    console.error(chalk.red(`Error getting NPM version: ${err}`));
+  });
 
 // Set up command options
 program
@@ -105,7 +159,11 @@ async function removeDependenciesContainingKeywords(
   }
 
   // Log dependencies to be removed
-  console.log(chalk.magenta(`The following dependencies will be removed using ${manager}:`));
+  console.log(
+    chalk.magenta(
+      `The following dependencies will be removed using ${manager}:`
+    )
+  );
   filteredDependencies.forEach((dep) => console.log(chalk.cyan(dep)));
 
   // Prompt user for confirmation if --force is not set, otherwise proceed
@@ -207,7 +265,9 @@ async function proceedRemoval(
       // Log any errors
       if (stderr) console.error(chalk.red(stderr));
 
-      console.log(chalk.green(`Dependencies removed successfully using ${manager}.`));
+      console.log(
+        chalk.green(`Dependencies removed successfully using ${manager}.`)
+      );
       break;
     } catch (error) {
       console.error(chalk.red(`Error executing command: ${error}`));
