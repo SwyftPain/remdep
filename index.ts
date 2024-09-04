@@ -98,30 +98,30 @@ program
         case comparisonResult > 0:
           console.log(
             chalk.yellow(
-              `RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`
+              `RemDep has a new version: ${npmVersion}. Your version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest\n\n`
             )
           );
           break;
         case comparisonResult < 0:
           console.log(
             chalk.red(
-              `You are running a higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`
+              `You are running a higher version than is available.\nNPM version: ${npmVersion}. Your version: ${thisProjectJson.version}.\n\n`
             )
           );
           break;
         case comparisonResult === 0:
           console.log(
             chalk.green(
-              `You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`
+              `You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}.\n\n`
             )
           );
           break;
         default:
-          console.log("Unexpected comparison result.");
+          console.log(`Unexpected comparison result.\n\n`);
           break;
       }
     } catch (err) {
-      console.error(chalk.red(`Error getting NPM version: ${err}`));
+      console.error(chalk.red(`Error getting NPM version: ${err}\n\n`));
     }
 
     const keywordList = keywords.split(",").map((k) => k.trim());
@@ -196,7 +196,7 @@ async function removeDependenciesContainingKeywords(
   // Log dependencies to be removed
   console.log(
     chalk.magenta(
-      `The following dependencies will be removed using ${manager}:`
+      `The following dependencies will be removed using ${manager}:\n\n`
     )
   );
   filteredDependencies.forEach((dep) => console.log(chalk.cyan(dep)));
@@ -210,7 +210,7 @@ async function removeDependenciesContainingKeywords(
     if (confirmation) {
       await proceedRemoval(manager, filteredDependencies, options.retry);
     } else {
-      console.log(chalk.yellow("Aborted."));
+      console.log(chalk.yellow(`\n\nAborted.`));
     }
   }
 }
@@ -284,9 +284,9 @@ async function proceedRemoval(
     try {
       console.log(
         chalk.magenta(
-          `Removing dependencies using ${manager}. Attempt ${attempt} of ${
+          `\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${
             retries + 1
-          }`
+          }\n\n`
         )
       );
 
@@ -301,16 +301,16 @@ async function proceedRemoval(
       if (stderr) console.error(chalk.red(stderr));
 
       console.log(
-        chalk.green(`Dependencies removed successfully using ${manager}.`)
+        chalk.green(`\n\nDependencies removed successfully using ${manager}.\n\n`)
       );
       break;
     } catch (error) {
-      console.error(chalk.red(`Error executing command: ${error}`));
+      console.error(chalk.red(`\n\nError executing command: ${error}\n\n`));
 
       // If this was the last attempt, throw the error
       if (attempt > retries) throw error;
       console.log(
-        chalk.yellow(`Retrying... Attempt ${attempt + 1} of ${retries + 1}`)
+        chalk.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}\n\n`)
       );
     }
   }
@@ -330,7 +330,7 @@ function askConfirmation() {
     });
 
     // Ask the user for confirmation
-    rl.question(chalk.blue("Do you want to proceed? (y/n): "), (answer) => {
+    rl.question(chalk.blue(`\n\nDo you want to proceed? (y/n): `), (answer) => {
       rl.close();
       resolve(answer.toLowerCase() === "y");
     });

@@ -89,21 +89,21 @@ program
         const comparisonResult = compareVersions(npmVersion, thisProjectJson.version);
         switch (true) {
             case comparisonResult > 0:
-                console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest`));
+                console.log(chalk_1.default.yellow(`RemDep has a new version: ${npmVersion}. Your version: ${thisProjectJson.version}.\nUpdate by running:\nnpm install -g remdep@latest\n\n`));
                 break;
             case comparisonResult < 0:
-                console.log(chalk_1.default.red(`You are running a higher version than is available.\nNPM version: ${npmVersion}.\nYour version: ${thisProjectJson.version}.`));
+                console.log(chalk_1.default.red(`You are running a higher version than is available.\nNPM version: ${npmVersion}. Your version: ${thisProjectJson.version}.\n\n`));
                 break;
             case comparisonResult === 0:
-                console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}`));
+                console.log(chalk_1.default.green(`You have the latest version of RemDep. NPM version: ${npmVersion} is equal to ${thisProjectJson.version}.\n\n`));
                 break;
             default:
-                console.log("Unexpected comparison result.");
+                console.log(`Unexpected comparison result.\n\n`);
                 break;
         }
     }
     catch (err) {
-        console.error(chalk_1.default.red(`Error getting NPM version: ${err}`));
+        console.error(chalk_1.default.red(`Error getting NPM version: ${err}\n\n`));
     }
     const keywordList = keywords.split(",").map((k) => k.trim());
     // Check if keywords are valid
@@ -146,7 +146,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
             return;
         }
         // Log dependencies to be removed
-        console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:`));
+        console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:\n\n`));
         filteredDependencies.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
         // Prompt user for confirmation if --force is not set, otherwise proceed
         if (options.force) {
@@ -158,7 +158,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
                 yield proceedRemoval(manager, filteredDependencies, options.retry);
             }
             else {
-                console.log(chalk_1.default.yellow("Aborted."));
+                console.log(chalk_1.default.yellow(`\n\nAborted.`));
             }
         }
     });
@@ -219,7 +219,7 @@ function proceedRemoval(manager, dependencies, retries) {
         // For each attempt execute the command
         for (let attempt = 1; attempt <= retries + 1; attempt++) {
             try {
-                console.log(chalk_1.default.magenta(`Removing dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
+                console.log(chalk_1.default.magenta(`\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}\n\n`));
                 // Execute the command
                 const command = `${manager} remove ${dependencies.join(" ")}`;
                 const { stdout, stderr } = yield execAsync(command);
@@ -228,15 +228,15 @@ function proceedRemoval(manager, dependencies, retries) {
                 // Log any errors
                 if (stderr)
                     console.error(chalk_1.default.red(stderr));
-                console.log(chalk_1.default.green(`Dependencies removed successfully using ${manager}.`));
+                console.log(chalk_1.default.green(`\n\nDependencies removed successfully using ${manager}.\n\n`));
                 break;
             }
             catch (error) {
-                console.error(chalk_1.default.red(`Error executing command: ${error}`));
+                console.error(chalk_1.default.red(`\n\nError executing command: ${error}\n\n`));
                 // If this was the last attempt, throw the error
                 if (attempt > retries)
                     throw error;
-                console.log(chalk_1.default.yellow(`Retrying... Attempt ${attempt + 1} of ${retries + 1}`));
+                console.log(chalk_1.default.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}\n\n`));
             }
         }
     });
@@ -254,7 +254,7 @@ function askConfirmation() {
             output: process.stdout,
         });
         // Ask the user for confirmation
-        rl.question(chalk_1.default.blue("Do you want to proceed? (y/n): "), (answer) => {
+        rl.question(chalk_1.default.blue(`\n\nDo you want to proceed? (y/n): `), (answer) => {
             rl.close();
             resolve(answer.toLowerCase() === "y");
         });
