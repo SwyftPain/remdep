@@ -105,7 +105,7 @@ async function removeDependenciesContainingKeywords(
   }
 
   // Log dependencies to be removed
-  console.log(chalk.magenta("The following dependencies will be removed:"));
+  console.log(chalk.magenta(`The following dependencies will be removed using ${manager}:`));
   filteredDependencies.forEach((dep) => console.log(chalk.cyan(dep)));
 
   // Prompt user for confirmation if --force is not set, otherwise proceed
@@ -207,7 +207,7 @@ async function proceedRemoval(
       // Log any errors
       if (stderr) console.error(chalk.red(stderr));
 
-      console.log(chalk.green("Dependencies removed successfully."));
+      console.log(chalk.green(`Dependencies removed successfully using ${manager}.`));
       break;
     } catch (error) {
       console.error(chalk.red(`Error executing command: ${error}`));

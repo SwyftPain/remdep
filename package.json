@@ -1,7 +1,7 @@
 {
   "name": "remdep",
   "description": "Remove dependencies based on a keyword from a project easy and fast",
-  "version": "1.0.39",
+  "version": "1.0.42",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "finish": "tsc && npm publish"
   },
   "repository": {
     "url": "https://github.com/SwyftPain/remdep.git",

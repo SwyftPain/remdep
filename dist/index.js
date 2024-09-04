@@ -76,7 +76,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
             return;
         }
         // Log dependencies to be removed
-        console.log(chalk_1.default.magenta("The following dependencies will be removed:"));
+        console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:`));
         filteredDependencies.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
         // Prompt user for confirmation if --force is not set, otherwise proceed
         if (options.force) {
@@ -158,7 +158,7 @@ function proceedRemoval(manager, dependencies, retries) {
                 // Log any errors
                 if (stderr)
                     console.error(chalk_1.default.red(stderr));
-                console.log(chalk_1.default.green("Dependencies removed successfully."));
+                console.log(chalk_1.default.green(`Dependencies removed successfully using ${manager}.`));
                 break;
             }
             catch (error) {

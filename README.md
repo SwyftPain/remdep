@@ -54,3 +54,14 @@ It will remove the specified dependencies based on the keywords and can handle m
 ## Updates
 
 Now supports multiple keywords: You can pass multiple keywords separated by commas to remove multiple dependencies in one go.
+
+## TODO
+
++ # Dependency Impact Analysis
+Find if the dependency is being used anywhere in the project and warn upon attempted removal. Optional with a flag.
+
++ # Multi-Keyword Matching
+Add regex as a matching option for power users. Optional with a flag (Possible complications with the way keywords are being split at the moment).
+
++ # Backup Option
+Add an option that creates a backup of the current package.json before removal. Afterwards, provide an option to restore and reinstall packages using preferred package manager. Optional with a flag.
