@@ -196,7 +196,7 @@ async function removeDependenciesContainingKeywords(
   // Log dependencies to be removed
   console.log(
     chalk.magenta(
-      `The following dependencies will be removed using ${manager}:\n\n`
+      `The following dependencies will be removed using ${manager}:\n`
     )
   );
   filteredDependencies.forEach((dep) => console.log(chalk.cyan(dep)));
@@ -210,7 +210,7 @@ async function removeDependenciesContainingKeywords(
     if (confirmation) {
       await proceedRemoval(manager, filteredDependencies, options.retry);
     } else {
-      console.log(chalk.yellow(`\n\nAborted.`));
+      console.log(chalk.yellow(`\nAborted.`));
     }
   }
 }
@@ -284,7 +284,7 @@ async function proceedRemoval(
     try {
       console.log(
         chalk.magenta(
-          `\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${
+          `\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${
             retries + 1
           }`
         )
@@ -301,16 +301,16 @@ async function proceedRemoval(
       if (stderr) console.error(chalk.red(stderr));
 
       console.log(
-        chalk.green(`\n\nDependencies removed successfully using ${manager}.`)
+        chalk.green(`\nDependencies removed successfully using ${manager}.`)
       );
       break;
     } catch (error) {
-      console.error(chalk.red(`\n\nError executing command: ${error}`));
+      console.error(chalk.red(`\nError executing command: ${error}`));
 
       // If this was the last attempt, throw the error
       if (attempt > retries) throw error;
       console.log(
-        chalk.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}`)
+        chalk.yellow(`\nRetrying... Attempt ${attempt + 1} of ${retries + 1}`)
       );
     }
   }
@@ -330,7 +330,7 @@ function askConfirmation() {
     });
 
     // Ask the user for confirmation
-    rl.question(chalk.blue(`\n\nDo you want to proceed? (y/n): `), (answer) => {
+    rl.question(chalk.blue(`\nDo you want to proceed? (y/n): `), (answer) => {
       rl.close();
       resolve(answer.toLowerCase() === "y");
     });

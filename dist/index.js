@@ -146,7 +146,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
             return;
         }
         // Log dependencies to be removed
-        console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:\n\n`));
+        console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:\n`));
         filteredDependencies.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
         // Prompt user for confirmation if --force is not set, otherwise proceed
         if (options.force) {
@@ -158,7 +158,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
                 yield proceedRemoval(manager, filteredDependencies, options.retry);
             }
             else {
-                console.log(chalk_1.default.yellow(`\n\nAborted.`));
+                console.log(chalk_1.default.yellow(`\nAborted.`));
             }
         }
     });
@@ -219,7 +219,7 @@ function proceedRemoval(manager, dependencies, retries) {
         // For each attempt execute the command
         for (let attempt = 1; attempt <= retries + 1; attempt++) {
             try {
-                console.log(chalk_1.default.magenta(`\n\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
+                console.log(chalk_1.default.magenta(`\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
                 // Execute the command
                 const command = `${manager} remove ${dependencies.join(" ")}`;
                 const { stdout, stderr } = yield execAsync(command);
@@ -228,15 +228,15 @@ function proceedRemoval(manager, dependencies, retries) {
                 // Log any errors
                 if (stderr)
                     console.error(chalk_1.default.red(stderr));
-                console.log(chalk_1.default.green(`\n\nDependencies removed successfully using ${manager}.`));
+                console.log(chalk_1.default.green(`\nDependencies removed successfully using ${manager}.`));
                 break;
             }
             catch (error) {
-                console.error(chalk_1.default.red(`\n\nError executing command: ${error}`));
+                console.error(chalk_1.default.red(`\nError executing command: ${error}`));
                 // If this was the last attempt, throw the error
                 if (attempt > retries)
                     throw error;
-                console.log(chalk_1.default.yellow(`\n\nRetrying... Attempt ${attempt + 1} of ${retries + 1}`));
+                console.log(chalk_1.default.yellow(`\nRetrying... Attempt ${attempt + 1} of ${retries + 1}`));
             }
         }
     });
@@ -254,7 +254,7 @@ function askConfirmation() {
             output: process.stdout,
         });
         // Ask the user for confirmation
-        rl.question(chalk_1.default.blue(`\n\nDo you want to proceed? (y/n): `), (answer) => {
+        rl.question(chalk_1.default.blue(`\nDo you want to proceed? (y/n): `), (answer) => {
             rl.close();
             resolve(answer.toLowerCase() === "y");
         });
