@@ -203,18 +203,6 @@ program
         console.error(chalk_1.default.red(`Error getting NPM version: ${err}\n`));
     }
     const keywordList = keywords.split(",").map((k) => k.trim());
-    if (options.fuzzMatching) {
-        const correctedKeywords = correctTyposWithFuzzyMatching(keywordList, thisProjectJson);
-        console.log(chalk_1.default.blue(`Corrected keywords: ${chalk_1.default.bold(correctedKeywords.join(", "))}`));
-        // Check if keywords are valid
-        if (correctedKeywords.some((k) => k === "")) {
-            console.error(chalk_1.default.red("Error: Keywords should be comma-separated without spaces or empty elements."));
-            process.exit(1);
-        }
-        // Remove dependencies
-        yield removeDependenciesContainingKeywords(correctedKeywords, options);
-        return;
-    }
     // Check if keywords are valid
     if (keywordList.some((k) => k === "")) {
         console.error(chalk_1.default.red("Error: Keywords should be comma-separated without spaces or empty elements."));
@@ -246,6 +234,18 @@ function removeDependenciesContainingKeywords(keywords, options) {
         if (!packageJson) {
             console.error(chalk_1.default.red("Error: No package.json file found in the current directory."));
             process.exit(1);
+        }
+        if (options.fuzzMatching) {
+            const correctedKeywords = correctTyposWithFuzzyMatching(keywords, packageJson);
+            console.log(chalk_1.default.blue(`Corrected keywords (fuzzy matching applied): ${chalk_1.default.bold(correctedKeywords.join(", "))}`));
+            // Check if any corrected keywords are empty (no match found)
+            if (correctedKeywords.some((k) => k === "")) {
+                console.error(chalk_1.default.red("Error: Could not find any dependencies matching the provided keywords."));
+                process.exit(1);
+            }
+            // Remove dependencies
+            yield removeDependenciesContainingKeywords(correctedKeywords, options);
+            return;
         }
         if (options.backup) {
             // check if package.json exists

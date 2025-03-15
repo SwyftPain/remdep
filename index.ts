@@ -238,33 +238,6 @@ program
 
     const keywordList = keywords.split(",").map((k) => k.trim());
 
-    if (options.fuzzMatching) {
-      const correctedKeywords = correctTyposWithFuzzyMatching(
-        keywordList,
-        thisProjectJson
-      );
-
-      console.log(
-        chalk.blue(
-          `Corrected keywords: ${chalk.bold(correctedKeywords.join(", "))}`
-        )
-      );
-
-      // Check if keywords are valid
-      if (correctedKeywords.some((k) => k === "")) {
-        console.error(
-          chalk.red(
-            "Error: Keywords should be comma-separated without spaces or empty elements."
-          )
-        );
-        process.exit(1);
-      }
-
-      // Remove dependencies
-      await removeDependenciesContainingKeywords(correctedKeywords, options);
-      return;
-    }
-
     // Check if keywords are valid
     if (keywordList.some((k) => k === "")) {
       console.error(
@@ -314,6 +287,33 @@ async function removeDependenciesContainingKeywords(
       chalk.red("Error: No package.json file found in the current directory.")
     );
     process.exit(1);
+  }
+
+  if (options.fuzzMatching) {
+    const correctedKeywords = correctTyposWithFuzzyMatching(
+      keywords,
+      packageJson
+    );
+
+    console.log(
+      chalk.blue(
+        `Corrected keywords (fuzzy matching applied): ${chalk.bold(correctedKeywords.join(", "))}`
+      )
+    );
+
+    // Check if any corrected keywords are empty (no match found)
+    if (correctedKeywords.some((k) => k === "")) {
+      console.error(
+        chalk.red(
+          "Error: Could not find any dependencies matching the provided keywords."
+        )
+      );
+      process.exit(1);
+    }
+
+    // Remove dependencies
+    await removeDependenciesContainingKeywords(correctedKeywords, options);
+    return;
   }
 
   if (options.backup) {
