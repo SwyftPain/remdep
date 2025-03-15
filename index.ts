@@ -290,19 +290,6 @@ async function removeDependenciesContainingKeywords(
     process.exit(1);
   }
 
-  if (options.fuzzMatching) {
-    // use levenshtein distance to find keywords
-    keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
-
-    console.log(
-      chalk.green(
-        `Keywords have been corrected using levenshtein distance. New keywords: ${keywords.join(
-          ", "
-        )}\n`
-      )
-    );
-  }
-
   if (options.backup) {
     // check if package.json exists
     if (!fs.existsSync("package.json")) {
@@ -365,6 +352,11 @@ async function removeDependenciesContainingKeywords(
 
   let onlyRemove = filteredDependencies;
 
+  if (options.fuzzMatching) {
+    // use levenshtein distance to find keywords
+    onlyRemove = correctTyposWithLevenshteinDistance(keywords, packageJson);
+  }
+
   if (options.skipInUse) {
     const depInUse = await checkInUse(filteredDependencies); // Await for the result
     if (depInUse.size > 0) {
@@ -401,6 +393,13 @@ async function removeDependenciesContainingKeywords(
     onlyRemove.forEach((dep) => console.log(chalk.cyan(dep)));
 
     return;
+  }
+
+  if (options.regexMatching) {
+    // use regex matching on the keywords
+    onlyRemove = onlyRemove.filter((dep) =>
+      keywords.some((keyword) => new RegExp(keyword, "i").test(dep))
+    );
   }
 
   if (options.fuzzMatching && options.regexMatching) {

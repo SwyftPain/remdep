@@ -237,11 +237,6 @@ function removeDependenciesContainingKeywords(keywords, options) {
             console.error(chalk_1.default.red("Error: No package.json file found in the current directory."));
             process.exit(1);
         }
-        if (options.fuzzMatching) {
-            // use levenshtein distance to find keywords
-            keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
-            console.log(chalk_1.default.green(`Keywords have been corrected using levenshtein distance. New keywords: ${keywords.join(", ")}\n`));
-        }
         if (options.backup) {
             // check if package.json exists
             if (!fs_2.default.existsSync("package.json")) {
@@ -273,6 +268,10 @@ function removeDependenciesContainingKeywords(keywords, options) {
             return;
         }
         let onlyRemove = filteredDependencies;
+        if (options.fuzzMatching) {
+            // use levenshtein distance to find keywords
+            onlyRemove = correctTyposWithLevenshteinDistance(keywords, packageJson);
+        }
         if (options.skipInUse) {
             const depInUse = yield checkInUse(filteredDependencies); // Await for the result
             if (depInUse.size > 0) {
@@ -296,6 +295,10 @@ function removeDependenciesContainingKeywords(keywords, options) {
             console.log(chalk_1.default.magenta(`The following dependencies would be removed using ${manager}:\n`));
             onlyRemove.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
             return;
+        }
+        if (options.regexMatching) {
+            // use regex matching on the keywords
+            onlyRemove = onlyRemove.filter((dep) => keywords.some((keyword) => new RegExp(keyword, "i").test(dep)));
         }
         if (options.fuzzMatching && options.regexMatching) {
             // fix typos using levenshtein distance, then use regex matching on the corrected keywords
