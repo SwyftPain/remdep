@@ -1,7 +1,7 @@
 {
   "name": "remdep",
   "description": "Remove dependencies based on a keyword from a project easy and fast",
-  "version": "1.1.16",
+  "version": "1.1.17",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "funding": "https://paypal.me/mrjohnnyjo",

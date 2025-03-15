@@ -414,7 +414,7 @@ async function removeDependenciesContainingKeywords(
 
     console.log(
       chalk.green(
-        `Keywords have been corrected using regex and levenshtein distance. New keywords: ${keywords.join(
+        `Keywords have been corrected using regex and levenshtein distance. New keywords: ${onlyRemove.join(
           ", "
         )}\n`
       )

@@ -302,7 +302,7 @@ function removeDependenciesContainingKeywords(keywords, options) {
             keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
             // use regex matching on the corrected keywords
             onlyRemove = onlyRemove.filter((dep) => keywords.some((keyword) => new RegExp(keyword, "i").test(dep)));
-            console.log(chalk_1.default.green(`Keywords have been corrected using regex and levenshtein distance. New keywords: ${keywords.join(", ")}\n`));
+            console.log(chalk_1.default.green(`Keywords have been corrected using regex and levenshtein distance. New keywords: ${onlyRemove.join(", ")}\n`));
         }
         // Log dependencies to be removed
         console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:\n`));
