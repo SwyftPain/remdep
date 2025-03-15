@@ -290,6 +290,21 @@ async function removeDependenciesContainingKeywords(
     process.exit(1);
   }
 
+  if (options.fuzzMatching && options.regexMatching) {
+    // fix typos using levenshtein distance, then use regex matching on the corrected keywords
+    keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
+
+    keywords = keywords.map((k) => `.*${k}.*`);
+
+    console.log(
+      chalk.green(
+        `Keywords have been corrected using regex and levenshtein distance. New keywords: ${keywords.join(
+          ", "
+        )}\n`
+      )
+    );
+  }
+
   if (options.fuzzMatching) {
     // use levenshtein distance to find keywords
     keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);

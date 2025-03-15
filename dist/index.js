@@ -237,6 +237,12 @@ function removeDependenciesContainingKeywords(keywords, options) {
             console.error(chalk_1.default.red("Error: No package.json file found in the current directory."));
             process.exit(1);
         }
+        if (options.fuzzMatching && options.regexMatching) {
+            // fix typos using levenshtein distance, then use regex matching on the corrected keywords
+            keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
+            keywords = keywords.map((k) => `.*${k}.*`);
+            console.log(chalk_1.default.green(`Keywords have been corrected using regex and levenshtein distance. New keywords: ${keywords.join(", ")}\n`));
+        }
         if (options.fuzzMatching) {
             // use levenshtein distance to find keywords
             keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
