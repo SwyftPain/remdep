@@ -18,6 +18,7 @@ interface Options {
   backup: boolean;
   restore: boolean;
   skipInUse: boolean;
+  regexMatching: boolean;
 }
 
 export type { Deps, JSON, Options };

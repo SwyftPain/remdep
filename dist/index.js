@@ -145,6 +145,7 @@ program
     .option("-rs, --restore", "Restore the original package.json file", false)
     .option("-s, --skip-in-use", "Skip dependencies that are currently used in the project", false)
     .option("-r, --retry <times>", "Retry the remove command on failure", parseInt, 0)
+    .option("-rm, --regex-matching", "Find dependencies using regular expressions (regex)", false)
     .version(thisProjectJson.version, "-v, --version", "Output the current version")
     .showHelpAfterError(true)
     .showSuggestionAfterError(true)
@@ -316,6 +317,10 @@ function loadPackageJson() {
 function fuzzyMatch(dep, keyword) {
     return fuzzy_1.default.filter(keyword, [dep]).length > 0; // Checks if the fuzzy match results are non-empty
 }
+function regexMatch(dep, keyword) {
+    const regex = new RegExp(keyword, "i"); // 'i' makes it case-insensitive
+    return regex.test(dep); // Test if the regex matches the dependency name
+}
 /**
  * Finds all dependencies in package.json that match any of the given keywords.
  *
@@ -326,6 +331,10 @@ function fuzzyMatch(dep, keyword) {
 function findDependencies(packageJson, keywords, options) {
     const dependencies = Object.keys(packageJson.dependencies || {});
     const devDependencies = Object.keys(packageJson.devDependencies || {});
+    if (options.regexMatching) {
+        return [...dependencies, ...devDependencies].filter((dep) => keywords.some((keyword) => regexMatch(dep, keyword)) // Use regexMatch instead of fuzzyMatch
+        );
+    }
     if (options.fuzzMatching) {
         return [...dependencies, ...devDependencies].filter((dep) => keywords.some((keyword) => fuzzyMatch(dep, keyword)));
     }

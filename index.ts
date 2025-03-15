@@ -144,6 +144,11 @@ program
     parseInt,
     0
   )
+  .option(
+    "-rm, --regex-matching",
+    "Find dependencies using regular expressions (regex)",
+    false
+  )
   .version(
     thisProjectJson.version,
     "-v, --version",
@@ -416,6 +421,11 @@ function fuzzyMatch(dep: string, keyword: string) {
   return fuzzy.filter(keyword, [dep]).length > 0; // Checks if the fuzzy match results are non-empty
 }
 
+function regexMatch(dep: string, keyword: string) {
+  const regex = new RegExp(keyword, "i"); // 'i' makes it case-insensitive
+  return regex.test(dep); // Test if the regex matches the dependency name
+}
+
 /**
  * Finds all dependencies in package.json that match any of the given keywords.
  *
@@ -430,6 +440,12 @@ function findDependencies(
 ) {
   const dependencies = Object.keys(packageJson.dependencies || {});
   const devDependencies = Object.keys(packageJson.devDependencies || {});
+
+  if (options.regexMatching) {
+    return [...dependencies, ...devDependencies].filter((dep) =>
+      keywords.some((keyword) => regexMatch(dep, keyword)) // Use regexMatch instead of fuzzyMatch
+    );
+  }
 
   if (options.fuzzMatching) {
     return [...dependencies, ...devDependencies].filter((dep) =>
