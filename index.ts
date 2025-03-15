@@ -18,7 +18,10 @@ const program = new Command();
 
 const inUse = new Set<string>();
 
-function correctTyposWithFuzzyMatching(keywords: string[], packageJson: JSON): string[] {
+function correctTyposWithFuzzyMatching(
+  keywords: string[],
+  packageJson: JSON
+): string[] {
   const allDependencies = [
     ...Object.keys(packageJson.dependencies || {}),
     ...Object.keys(packageJson.devDependencies || {}),
@@ -39,6 +42,15 @@ function correctTyposWithFuzzyMatching(keywords: string[], packageJson: JSON): s
     return correctedKeyword;
   });
 }
+
+function fuzzyMatch(dep: string, keyword: string): string | null {
+  const results = fuzzy.filter(keyword, [dep]);
+  if (results.length > 0) {
+    return results[0].string; // Return the best match
+  }
+  return null;
+}
+
 
 const checkInUse = async (
   filteredDependencies: string[]
@@ -227,23 +239,30 @@ program
     const keywordList = keywords.split(",").map((k) => k.trim());
 
     if (options.fuzzMatching) {
-      const correctedKeywords = correctTyposWithFuzzyMatching(keywordList, thisProjectJson);
+      const correctedKeywords = correctTyposWithFuzzyMatching(
+        keywordList,
+        thisProjectJson
+      );
 
-    console.log(chalk.blue(`Corrected keywords: ${chalk.bold(correctedKeywords.join(", "))}`));
-
-    // Check if keywords are valid
-    if (correctedKeywords.some((k) => k === "")) {
-      console.error(
-        chalk.red(
-          "Error: Keywords should be comma-separated without spaces or empty elements."
+      console.log(
+        chalk.blue(
+          `Corrected keywords: ${chalk.bold(correctedKeywords.join(", "))}`
         )
       );
-      process.exit(1);
-    }
 
-    // Remove dependencies
-    await removeDependenciesContainingKeywords(correctedKeywords, options);
-    return;
+      // Check if keywords are valid
+      if (correctedKeywords.some((k) => k === "")) {
+        console.error(
+          chalk.red(
+            "Error: Keywords should be comma-separated without spaces or empty elements."
+          )
+        );
+        process.exit(1);
+      }
+
+      // Remove dependencies
+      await removeDependenciesContainingKeywords(correctedKeywords, options);
+      return;
     }
 
     // Check if keywords are valid
@@ -469,14 +488,6 @@ function regexMatch(dep: string, keyword: string) {
   return regex.test(dep); // Test if the regex matches the dependency name
 }
 
-function fuzzyMatch(dep: string, keyword: string): string | null {
-  const results = fuzzy.filter(keyword, [dep]);
-  if (results.length > 0) {
-    return results[0].string; // Return the best match
-  }
-  return null;
-}
-
 /**
  * Finds all dependencies in package.json that match any of the given keywords.
  *
@@ -513,7 +524,7 @@ function findDependencies(
   if (options.fuzzMatching) {
     return keywords.map((keyword) => {
       let correctedKeyword = keyword;
-  
+
       // Try fuzzy matching for each dependency
       for (const dep of allDependencies) {
         const match = fuzzyMatch(dep, keyword);
@@ -522,7 +533,7 @@ function findDependencies(
           break; // Use the first match we find
         }
       }
-  
+
       return correctedKeyword;
     });
   }

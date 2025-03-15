@@ -68,6 +68,13 @@ function correctTyposWithFuzzyMatching(keywords, packageJson) {
         return correctedKeyword;
     });
 }
+function fuzzyMatch(dep, keyword) {
+    const results = fuzzy_1.default.filter(keyword, [dep]);
+    if (results.length > 0) {
+        return results[0].string; // Return the best match
+    }
+    return null;
+}
 const checkInUse = (filteredDependencies) => __awaiter(void 0, void 0, void 0, function* () {
     const sourceFiles = glob.sync("**/*.{ts,tsx}", { ignore: "node_modules/**" });
     const allDependencies = filteredDependencies; // Dependencies selected for removal
@@ -351,13 +358,6 @@ function regexMatch(dep, keyword) {
     const escapedKeyword = escapeRegexString(keyword); // Escape special regex characters
     const regex = new RegExp(escapedKeyword, "i"); // 'i' makes it case-insensitive
     return regex.test(dep); // Test if the regex matches the dependency name
-}
-function fuzzyMatch(dep, keyword) {
-    const results = fuzzy_1.default.filter(keyword, [dep]);
-    if (results.length > 0) {
-        return results[0].string; // Return the best match
-    }
-    return null;
 }
 /**
  * Finds all dependencies in package.json that match any of the given keywords.
