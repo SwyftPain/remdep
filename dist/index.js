@@ -50,6 +50,24 @@ const fuzzy_1 = __importDefault(require("fuzzy"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const program = new commander_1.Command();
 const inUse = new Set();
+function correctTyposWithFuzzyMatching(keywords, packageJson) {
+    const allDependencies = [
+        ...Object.keys(packageJson.dependencies || {}),
+        ...Object.keys(packageJson.devDependencies || {}),
+    ];
+    return keywords.map((keyword) => {
+        let correctedKeyword = keyword;
+        // Try fuzzy matching for each dependency
+        for (const dep of allDependencies) {
+            const match = fuzzyMatch(dep, keyword);
+            if (match) {
+                correctedKeyword = match;
+                break; // Use the first match we find
+            }
+        }
+        return correctedKeyword;
+    });
+}
 const checkInUse = (filteredDependencies) => __awaiter(void 0, void 0, void 0, function* () {
     const sourceFiles = glob.sync("**/*.{ts,tsx}", { ignore: "node_modules/**" });
     const allDependencies = filteredDependencies; // Dependencies selected for removal
@@ -178,6 +196,18 @@ program
         console.error(chalk_1.default.red(`Error getting NPM version: ${err}\n`));
     }
     const keywordList = keywords.split(",").map((k) => k.trim());
+    if (options.fuzzMatching) {
+        const correctedKeywords = correctTyposWithFuzzyMatching(keywordList, thisProjectJson);
+        console.log(chalk_1.default.blue(`Corrected keywords: ${chalk_1.default.bold(correctedKeywords.join(", "))}`));
+        // Check if keywords are valid
+        if (correctedKeywords.some((k) => k === "")) {
+            console.error(chalk_1.default.red("Error: Keywords should be comma-separated without spaces or empty elements."));
+            process.exit(1);
+        }
+        // Remove dependencies
+        yield removeDependenciesContainingKeywords(correctedKeywords, options);
+        return;
+    }
     // Check if keywords are valid
     if (keywordList.some((k) => k === "")) {
         console.error(chalk_1.default.red("Error: Keywords should be comma-separated without spaces or empty elements."));
@@ -314,9 +344,6 @@ function loadPackageJson() {
         return null;
     }
 }
-function fuzzyMatch(dep, keyword) {
-    return fuzzy_1.default.filter(keyword, [dep]).length > 0; // Checks if the fuzzy match results are non-empty
-}
 function escapeRegexString(str) {
     return str.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, "\\$&");
 }
@@ -324,6 +351,13 @@ function regexMatch(dep, keyword) {
     const escapedKeyword = escapeRegexString(keyword); // Escape special regex characters
     const regex = new RegExp(escapedKeyword, "i"); // 'i' makes it case-insensitive
     return regex.test(dep); // Test if the regex matches the dependency name
+}
+function fuzzyMatch(dep, keyword) {
+    const results = fuzzy_1.default.filter(keyword, [dep]);
+    if (results.length > 0) {
+        return results[0].string; // Return the best match
+    }
+    return null;
 }
 /**
  * Finds all dependencies in package.json that match any of the given keywords.
@@ -335,6 +369,7 @@ function regexMatch(dep, keyword) {
 function findDependencies(packageJson, keywords, options) {
     const dependencies = Object.keys(packageJson.dependencies || {});
     const devDependencies = Object.keys(packageJson.devDependencies || {});
+    const allDependencies = [...dependencies, ...devDependencies];
     if (options.regexMatching) {
         return [...dependencies, ...devDependencies].filter((dep) => {
             // Iterate over the keywords and check if any regex pattern matches the dependency
@@ -352,7 +387,18 @@ function findDependencies(packageJson, keywords, options) {
         });
     }
     if (options.fuzzMatching) {
-        return [...dependencies, ...devDependencies].filter((dep) => keywords.some((keyword) => fuzzyMatch(dep, keyword)));
+        return keywords.map((keyword) => {
+            let correctedKeyword = keyword;
+            // Try fuzzy matching for each dependency
+            for (const dep of allDependencies) {
+                const match = fuzzyMatch(dep, keyword);
+                if (match) {
+                    correctedKeyword = match;
+                    break; // Use the first match we find
+                }
+            }
+            return correctedKeyword;
+        });
     }
     return [...dependencies, ...devDependencies].filter((dep) => keywords.some((keyword) => dep.includes(keyword)));
 }
