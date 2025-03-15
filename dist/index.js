@@ -46,34 +46,36 @@ const path_1 = __importDefault(require("path"));
 const fs_2 = __importDefault(require("fs"));
 const ts_morph_1 = require("ts-morph");
 const glob = __importStar(require("glob"));
-const fuzzy_1 = __importDefault(require("fuzzy"));
+const fast_levenshtein_1 = require("fast-levenshtein");
+const levenshtein = fast_levenshtein_1.get;
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const program = new commander_1.Command();
 const inUse = new Set();
-function correctTyposWithFuzzyMatching(keywords, packageJson) {
+function correctTyposWithLevenshteinDistance(keywords, packageJson) {
     const allDependencies = [
         ...Object.keys(packageJson.dependencies || {}),
         ...Object.keys(packageJson.devDependencies || {}),
     ];
     return keywords.map((keyword) => {
         let correctedKeyword = keyword;
-        // Try fuzzy matching for each dependency
+        let smallestDistance = Infinity; // To track the smallest Levenshtein distance
+        let bestMatch = keyword;
         for (const dep of allDependencies) {
-            const match = fuzzyMatch(dep, keyword);
-            if (match) {
-                correctedKeyword = match; // Correct the keyword if a close match is found
-                break; // Use the first match we find
+            const distance = levenshtein(dep, keyword); // Calculate Levenshtein distance
+            if (distance < smallestDistance) {
+                smallestDistance = distance;
+                bestMatch = dep; // Keep track of the closest match
             }
+        }
+        // If a valid dependency is found with a smaller distance, use it
+        if (smallestDistance < keyword.length / 2) {
+            correctedKeyword = bestMatch;
+        }
+        else {
+            console.log(chalk_1.default.yellow(`No close match found for "${keyword}". Using original keyword.`));
         }
         return correctedKeyword;
     });
-}
-function fuzzyMatch(dep, keyword) {
-    const results = fuzzy_1.default.filter(keyword, [dep]);
-    if (results.length > 0) {
-        return results[0].string; // Return the best match
-    }
-    return null;
 }
 const checkInUse = (filteredDependencies) => __awaiter(void 0, void 0, void 0, function* () {
     const sourceFiles = glob.sync("**/*.{ts,tsx}", { ignore: "node_modules/**" });
@@ -236,11 +238,9 @@ function removeDependenciesContainingKeywords(keywords, options) {
             process.exit(1);
         }
         if (options.fuzzMatching) {
-            const correctedKeywords = correctTyposWithFuzzyMatching(keywords, packageJson);
-            console.log(chalk_1.default.blue(`Corrected keywords (fuzzy matching applied): ${chalk_1.default.bold(correctedKeywords.join(", "))}`));
-            // Ensure we don’t re-trigger the removeDependenciesContainingKeywords function recursively
-            yield proceedRemoval(manager, correctedKeywords, options.retry, options.skipInUse);
-            return; // End the current execution to prevent further recursion.
+            // use levenshtein distance to find keywords
+            keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
+            console.log(chalk_1.default.green(`Keywords have been corrected using levenshtein distance. New keywords: ${keywords.join(", ")}\n`));
         }
         if (options.backup) {
             // check if package.json exists
@@ -382,17 +382,13 @@ function findDependencies(packageJson, keywords, options) {
         });
     }
     if (options.fuzzMatching) {
-        return keywords.map((keyword) => {
-            let correctedKeyword = keyword;
-            // Try fuzzy matching for each dependency
-            for (const dep of allDependencies) {
-                const match = fuzzyMatch(dep, keyword);
-                if (match) {
-                    correctedKeyword = match;
-                    break; // Use the first match we find
-                }
-            }
-            return correctedKeyword;
+        // Get corrected keywords using Levenshtein distance
+        const correctedKeywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
+        // Now return dependencies for all corrected keywords (including original and corrected ones)
+        const allKeywords = [...keywords, ...correctedKeywords];
+        // Filter dependencies based on any keyword (original or corrected)
+        return allDependencies.filter((dep) => {
+            return allKeywords.some((keyword) => dep.toLowerCase().includes(keyword.toLowerCase()));
         });
     }
     return [...dependencies, ...devDependencies].filter((dep) => keywords.some((keyword) => dep.includes(keyword)));
