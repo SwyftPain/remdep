@@ -312,12 +312,12 @@ function removeDependenciesContainingKeywords(keywords, options) {
         onlyRemove.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
         // Prompt user for confirmation if --force is not set, otherwise proceed
         if (options.force) {
-            yield proceedRemoval(manager, onlyRemove !== null && onlyRemove !== void 0 ? onlyRemove : keywords, options.retry, options.skipInUse);
+            yield proceedRemoval(manager, onlyRemove.length < 1 ? keywords : onlyRemove, options.retry, options.skipInUse);
         }
         else {
             const confirmation = yield askConfirmation();
             if (confirmation) {
-                yield proceedRemoval(manager, onlyRemove !== null && onlyRemove !== void 0 ? onlyRemove : keywords, options.retry, options.skipInUse);
+                yield proceedRemoval(manager, onlyRemove.length < 1 ? keywords : onlyRemove, options.retry, options.skipInUse);
             }
             else {
                 console.log(chalk_1.default.yellow(`\nAborted.`));
@@ -444,7 +444,7 @@ function proceedRemoval(manager, dependencies, retries, skipInUse) {
             try {
                 console.log(chalk_1.default.magenta(`\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
                 // Execute the command
-                const command = `${manager} remove ${onlyRemove.join(" ")}`;
+                const command = `${manager} remove ${(onlyRemove.length < 1 ? dependencies : onlyRemove).join(" ")}`;
                 const { stdout, stderr } = yield execAsync(command);
                 // Log the output
                 console.log(chalk_1.default.green(stdout));
