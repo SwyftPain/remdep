@@ -30,7 +30,7 @@ You can pass flags:
 
 ``--dependency-impact`` to show which packages are imported and in use (likely shouldn't be deleted).
 
-``--fuzz-matching`` to do fuzzy matching, using regex for sorting out dependencies.
+``--fuzz-matching`` to do fuzzy matching.
 
 ``--backup`` to backup your package.json file.
 
@@ -39,6 +39,8 @@ You can pass flags:
 ``--skip-in-use`` to skip dependencies that are in use from being deleted.
 
 ``--retry <#>`` to specify how many times to retry in case of an error.
+
+``--regex-matching`` to search using regex.
 
 ``--help`` to print help information.
 

@@ -317,8 +317,12 @@ function loadPackageJson() {
 function fuzzyMatch(dep, keyword) {
     return fuzzy_1.default.filter(keyword, [dep]).length > 0; // Checks if the fuzzy match results are non-empty
 }
+function escapeRegexString(str) {
+    return str.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, "\\$&");
+}
 function regexMatch(dep, keyword) {
-    const regex = new RegExp(keyword, "i"); // 'i' makes it case-insensitive
+    const escapedKeyword = escapeRegexString(keyword); // Escape special regex characters
+    const regex = new RegExp(escapedKeyword, "i"); // 'i' makes it case-insensitive
     return regex.test(dep); // Test if the regex matches the dependency name
 }
 /**
