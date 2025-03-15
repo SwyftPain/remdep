@@ -301,19 +301,9 @@ async function removeDependenciesContainingKeywords(
       )
     );
 
-    // Check if any corrected keywords are empty (no match found)
-    if (correctedKeywords.some((k) => k === "")) {
-      console.error(
-        chalk.red(
-          "Error: Could not find any dependencies matching the provided keywords."
-        )
-      );
-      process.exit(1);
-    }
-
-    // Remove dependencies
-    await removeDependenciesContainingKeywords(correctedKeywords, options);
-    return;
+    // Ensure we don’t re-trigger the removeDependenciesContainingKeywords function recursively
+    await proceedRemoval(manager, correctedKeywords, options.retry, options.skipInUse);
+    return; // End the current execution to prevent further recursion.
   }
 
   if (options.backup) {

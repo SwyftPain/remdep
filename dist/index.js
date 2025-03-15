@@ -238,14 +238,9 @@ function removeDependenciesContainingKeywords(keywords, options) {
         if (options.fuzzMatching) {
             const correctedKeywords = correctTyposWithFuzzyMatching(keywords, packageJson);
             console.log(chalk_1.default.blue(`Corrected keywords (fuzzy matching applied): ${chalk_1.default.bold(correctedKeywords.join(", "))}`));
-            // Check if any corrected keywords are empty (no match found)
-            if (correctedKeywords.some((k) => k === "")) {
-                console.error(chalk_1.default.red("Error: Could not find any dependencies matching the provided keywords."));
-                process.exit(1);
-            }
-            // Remove dependencies
-            yield removeDependenciesContainingKeywords(correctedKeywords, options);
-            return;
+            // Ensure we don’t re-trigger the removeDependenciesContainingKeywords function recursively
+            yield proceedRemoval(manager, correctedKeywords, options.retry, options.skipInUse);
+            return; // End the current execution to prevent further recursion.
         }
         if (options.backup) {
             // check if package.json exists
