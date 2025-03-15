@@ -430,14 +430,14 @@ async function removeDependenciesContainingKeywords(
 
   // Prompt user for confirmation if --force is not set, otherwise proceed
   if (options.force) {
-    await proceedRemoval(manager, onlyRemove, options.retry, options.skipInUse);
+    await proceedRemoval(manager, onlyRemove ?? keywords, options.retry, options.skipInUse);
   } else {
     const confirmation = await askConfirmation();
 
     if (confirmation) {
       await proceedRemoval(
         manager,
-        onlyRemove,
+        onlyRemove ?? keywords,
         options.retry,
         options.skipInUse
       );
