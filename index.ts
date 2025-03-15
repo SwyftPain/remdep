@@ -407,7 +407,10 @@ async function removeDependenciesContainingKeywords(
     // fix typos using levenshtein distance, then use regex matching on the corrected keywords
     keywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
 
-    keywords = keywords.map((k) => `.*${k}.*`);
+    // use regex matching on the corrected keywords
+    onlyRemove = onlyRemove.filter((dep) =>
+      keywords.some((keyword) => new RegExp(keyword, "i").test(dep))
+    );
 
     console.log(
       chalk.green(
