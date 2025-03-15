@@ -34,7 +34,7 @@ function correctTyposWithFuzzyMatching(
     for (const dep of allDependencies) {
       const match = fuzzyMatch(dep, keyword);
       if (match) {
-        correctedKeyword = match;
+        correctedKeyword = match; // Correct the keyword if a close match is found
         break; // Use the first match we find
       }
     }
@@ -50,7 +50,6 @@ function fuzzyMatch(dep: string, keyword: string): string | null {
   }
   return null;
 }
-
 
 const checkInUse = async (
   filteredDependencies: string[]

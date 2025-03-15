@@ -61,7 +61,7 @@ function correctTyposWithFuzzyMatching(keywords, packageJson) {
         for (const dep of allDependencies) {
             const match = fuzzyMatch(dep, keyword);
             if (match) {
-                correctedKeyword = match;
+                correctedKeyword = match; // Correct the keyword if a close match is found
                 break; // Use the first match we find
             }
         }
