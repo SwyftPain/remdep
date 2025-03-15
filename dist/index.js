@@ -365,6 +365,24 @@ function findDependencies(packageJson, keywords, options) {
     const dependencies = Object.keys(packageJson.dependencies || {});
     const devDependencies = Object.keys(packageJson.devDependencies || {});
     const allDependencies = [...dependencies, ...devDependencies];
+    if (options.regexMatching && options.fuzzMatching) {
+        // first correct keywords using Levenshtein distance, then use regex matching on the corrected keywords
+        const correctedKeywords = correctTyposWithLevenshteinDistance(keywords, packageJson);
+        return [...dependencies, ...devDependencies].filter((dep) => {
+            // Iterate over the corrected keywords and check if any regex pattern matches the dependency
+            return correctedKeywords.some((keyword) => {
+                try {
+                    // Create a RegExp object with the provided keyword pattern
+                    const regex = new RegExp(keyword, "i"); // "i" for case-insensitive matching
+                    return regex.test(dep); // Test if the dependency name matches the regex
+                }
+                catch (e) {
+                    console.error(chalk_1.default.red(`Invalid regex pattern: ${keyword}`));
+                    return false; // If the regex is invalid, return false
+                }
+            });
+        });
+    }
     if (options.regexMatching) {
         return [...dependencies, ...devDependencies].filter((dep) => {
             // Iterate over the keywords and check if any regex pattern matches the dependency
