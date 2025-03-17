@@ -43,7 +43,7 @@
   "license": "MIT",
   "author": "SwyftPain",
   "dependencies": {
-    "chalk": "4",
+    "chalk": "5",
     "commander": "^12.1.0",
     "fast-levenshtein": "^3.0.0",
     "fuzzy": "^0.1.3",
