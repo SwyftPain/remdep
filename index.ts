@@ -56,11 +56,13 @@ function correctTyposWithLevenshteinDistance(
 const checkInUse = async (
   filteredDependencies: string[]
 ): Promise<Set<string>> => {
-  const sourceFiles = glob.sync("**/*.{ts,tsx}", { ignore: "node_modules/**" });
+  const sourceFiles = glob.sync("**/*.{ts,tsx,js,jsx}", {
+    ignore: "node_modules/**",
+  });
 
   const allDependencies = filteredDependencies; // Dependencies selected for removal
 
-  const project = new Project();
+  const project = new Project({ compilerOptions: { allowJs: true } });
   sourceFiles.forEach((file) => project.addSourceFileAtPath(file));
 
   project.getSourceFiles().forEach((sourceFile) => {
@@ -420,6 +422,13 @@ async function removeDependenciesContainingKeywords(
     );
   }
 
+  if (onlyRemove.length === 0) {
+    console.log(
+      chalk.yellow("No dependencies to remove after applying filters.\n")
+    );
+    return;
+  }
+
   // Log dependencies to be removed
   console.log(
     chalk.magenta(
@@ -430,17 +439,12 @@ async function removeDependenciesContainingKeywords(
 
   // Prompt user for confirmation if --force is not set, otherwise proceed
   if (options.force) {
-    await proceedRemoval(manager, onlyRemove.length < 1 ? keywords : onlyRemove, options.retry, options.skipInUse);
+    await proceedRemoval(manager, onlyRemove, options.retry, options.skipInUse);
   } else {
     const confirmation = await askConfirmation();
 
     if (confirmation) {
-      await proceedRemoval(
-        manager,
-        onlyRemove.length < 1 ? keywords : onlyRemove,
-        options.retry,
-        options.skipInUse
-      );
+      await proceedRemoval(manager, onlyRemove, options.retry, options.skipInUse);
     } else {
       console.log(chalk.yellow(`\nAborted.`));
     }
@@ -575,16 +579,22 @@ async function proceedRemoval(
   retries: number,
   skipInUse: boolean
 ) {
-  const onlyRemove: string[] = [];
+  let depsToRemove = [...dependencies];
 
   if (skipInUse) {
-    const depInUse = await checkInUse(dependencies); // Await for the result
-    onlyRemove.concat(dependencies.filter((dep) => !depInUse.has(dep)));
-    // show depenedencies that are in use and will not removed
-    console.log(
-      "Dependencies that are in use and are not be removed:\n" +
-        chalk.red(Array.from(depInUse).join("\n"))
-    );
+    const depInUse = await checkInUse(depsToRemove); // Await for the result
+    if (depInUse.size > 0) {
+      console.log(
+        "Dependencies that are in use and are not be removed:\n" +
+          chalk.red(Array.from(depInUse).join("\n"))
+      );
+      depsToRemove = depsToRemove.filter((dep) => !depInUse.has(dep));
+    }
+  }
+
+  if (depsToRemove.length === 0) {
+    console.log(chalk.yellow("\nNo dependencies to remove.\n"));
+    return;
   }
 
   // For each attempt execute the command
@@ -599,7 +609,7 @@ async function proceedRemoval(
       );
 
       // Execute the command
-      const command = `${manager} remove ${(onlyRemove.length < 1 ? dependencies : onlyRemove).join(" ")}`;
+      const command = `${manager} remove ${depsToRemove.join(" ")}`;
       const { stdout, stderr } = await execAsync(command);
 
       // Log the output

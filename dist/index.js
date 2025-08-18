@@ -78,9 +78,11 @@ function correctTyposWithLevenshteinDistance(keywords, packageJson) {
     });
 }
 const checkInUse = (filteredDependencies) => __awaiter(void 0, void 0, void 0, function* () {
-    const sourceFiles = glob.sync("**/*.{ts,tsx}", { ignore: "node_modules/**" });
+    const sourceFiles = glob.sync("**/*.{ts,tsx,js,jsx}", {
+        ignore: "node_modules/**",
+    });
     const allDependencies = filteredDependencies; // Dependencies selected for removal
-    const project = new ts_morph_1.Project();
+    const project = new ts_morph_1.Project({ compilerOptions: { allowJs: true } });
     sourceFiles.forEach((file) => project.addSourceFileAtPath(file));
     project.getSourceFiles().forEach((sourceFile) => {
         sourceFile.getImportDeclarations().forEach((importDecl) => {
@@ -307,17 +309,21 @@ function removeDependenciesContainingKeywords(keywords, options) {
             onlyRemove = onlyRemove.filter((dep) => keywords.some((keyword) => new RegExp(keyword, "i").test(dep)));
             console.log(chalk_1.default.green(`Keywords have been corrected using regex and levenshtein distance. New keywords: ${onlyRemove.join(", ")}\n`));
         }
+        if (onlyRemove.length === 0) {
+            console.log(chalk_1.default.yellow("No dependencies to remove after applying filters.\n"));
+            return;
+        }
         // Log dependencies to be removed
         console.log(chalk_1.default.magenta(`The following dependencies will be removed using ${manager}:\n`));
         onlyRemove.forEach((dep) => console.log(chalk_1.default.cyan(dep)));
         // Prompt user for confirmation if --force is not set, otherwise proceed
         if (options.force) {
-            yield proceedRemoval(manager, onlyRemove.length < 1 ? keywords : onlyRemove, options.retry, options.skipInUse);
+            yield proceedRemoval(manager, onlyRemove, options.retry, options.skipInUse);
         }
         else {
             const confirmation = yield askConfirmation();
             if (confirmation) {
-                yield proceedRemoval(manager, onlyRemove.length < 1 ? keywords : onlyRemove, options.retry, options.skipInUse);
+                yield proceedRemoval(manager, onlyRemove, options.retry, options.skipInUse);
             }
             else {
                 console.log(chalk_1.default.yellow(`\nAborted.`));
@@ -431,20 +437,25 @@ function findDependencies(packageJson, keywords, options) {
  */
 function proceedRemoval(manager, dependencies, retries, skipInUse) {
     return __awaiter(this, void 0, void 0, function* () {
-        const onlyRemove = [];
+        let depsToRemove = [...dependencies];
         if (skipInUse) {
-            const depInUse = yield checkInUse(dependencies); // Await for the result
-            onlyRemove.concat(dependencies.filter((dep) => !depInUse.has(dep)));
-            // show depenedencies that are in use and will not removed
-            console.log("Dependencies that are in use and are not be removed:\n" +
-                chalk_1.default.red(Array.from(depInUse).join("\n")));
+            const depInUse = yield checkInUse(depsToRemove); // Await for the result
+            if (depInUse.size > 0) {
+                console.log("Dependencies that are in use and are not be removed:\n" +
+                    chalk_1.default.red(Array.from(depInUse).join("\n")));
+                depsToRemove = depsToRemove.filter((dep) => !depInUse.has(dep));
+            }
+        }
+        if (depsToRemove.length === 0) {
+            console.log(chalk_1.default.yellow("\nNo dependencies to remove.\n"));
+            return;
         }
         // For each attempt execute the command
         for (let attempt = 1; attempt <= retries + 1; attempt++) {
             try {
                 console.log(chalk_1.default.magenta(`\nRemoving dependencies using ${manager}. Attempt ${attempt} of ${retries + 1}`));
                 // Execute the command
-                const command = `${manager} remove ${(onlyRemove.length < 1 ? dependencies : onlyRemove).join(" ")}`;
+                const command = `${manager} remove ${depsToRemove.join(" ")}`;
                 const { stdout, stderr } = yield execAsync(command);
                 // Log the output
                 console.log(chalk_1.default.green(stdout));
