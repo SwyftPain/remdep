@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@types/fast-levenshtein": "^0.0.4",
-    "@types/node": "^22.5.3"
+    "@types/node": "^24.3.0"
   },
   "displayName": "RemDep",
   "keywords": [
